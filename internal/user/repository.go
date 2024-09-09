@@ -17,6 +17,10 @@ type GormUserRepository struct {
 	DB *gorm.DB
 }
 
+func NewGormUserRepository(db *gorm.DB) UserRepository {
+	return &GormUserRepository{DB: db}
+}
+
 func (repo *GormUserRepository) GetByID(id uint64) (User, error) {
 	var user User
 	if err := repo.DB.Where(User{ID: id}).Find(&user).Error; err != nil {

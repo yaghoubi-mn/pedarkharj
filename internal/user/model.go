@@ -9,8 +9,8 @@ type User struct {
 }
 
 type Device struct {
-	ID   uint64 `json:"id"`
-	Name string `json:"name"`
+	ID   uint64
+	Name string
 
 	refresh string // refresh token
 
@@ -22,8 +22,11 @@ type VerifyNumberInput struct {
 	Token  string `json:"token"` // temporary token
 }
 
-type UserInput struct {
-	Name string `json:"name"`
+type SignupUserInput struct {
+	Number   string `json:"number" validate:"require,e164"`
+	Name     string `json:"name" validate:"name"`
+	Password string `json:"password" validate:"password"`
+	Token    string `json:"token" validate:"uuid"`
 }
 
 type UserOutput struct {
