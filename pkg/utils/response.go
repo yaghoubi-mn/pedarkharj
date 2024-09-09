@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 )
 
-func JSONResponse(w http.ResponseWriter, status int, code int, mapData map[string]interface{}) {
+func JSONResponse(w http.ResponseWriter, status int, code string, mapData datatypes.Map) {
 	mapData["code"] = code
 	mapData["status"] = status
 
@@ -17,31 +16,32 @@ func JSONResponse(w http.ResponseWriter, status int, code int, mapData map[strin
 
 }
 
-func JSONStructResponse(w http.ResponseWriter, status int, code int, data datatypes.Table) {
-	outData := make(map[string]interface{})
+func JSONStructResponse(w http.ResponseWriter, status int, code string, data datatypes.Table) {
+	outData := make(datatypes.Map)
 	outData["data"] = data
 }
 
 // errs example: "name: invalid name"
-func JSONErrorResponse(w http.ResponseWriter, status int, code int, errs ...string) {
-	if len(errs) == 0 {
-		log.Fatalln("errs is required in JSONResponse")
+func JSONErrorResponse(w http.ResponseWriter, status int, code string, errMap map[string]string) {
+	if errMap == nil {
+		log.Fatalln("errMap is required in JSONResponse")
 	}
 
-	outData := make(map[string]interface{})
-	outData["errors"] = map[string]interface{}{}
+	outData := make(datatypes.Map)
+	outData["errors"] = datatypes.Map{}
 
-	temp := make(map[string]interface{})
-	for _, err := range errs {
-		splited := strings.Split(err, ":")
-		if len(splited) != 2 {
-			log.Fatalln("invalid err in JSONErrorResponse")
-		}
-		temp[splited[0]] = splited[1]
+	temp := make(datatypes.Map)
+	for key := range errMap {
+		temp[key] = errMap[key]
 	}
 
 	outData["errors"] = interface{}(temp)
 
 	JSONResponse(w, status, code, outData)
 
+}
+
+func JSONServerError(w http.ResponseWriter, err error) {
+	log.Println(err.Error())
+	JSONResponse(w, http.StatusInternalServerError, "", datatypes.Map{"msg": "Server error"})
 }
