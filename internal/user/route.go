@@ -2,10 +2,12 @@ package user
 
 import "net/http"
 
-func Route(mux *http.ServeMux, userHandler Handler) {
-	userMux := http.NewServeMux()
-	userMux.HandleFunc("signup", userHandler.CreateUser)
+func Route(prefix string, mux *http.ServeMux, userHandler Handler) {
 
+	// mux := http.NewServeMux()
+	mux.HandleFunc("POST "+prefix+"/signup", userHandler.SignupUser)
+	mux.HandleFunc("POST "+prefix+"/verify-number", userHandler.VerifyNumber)
 	// mux.Handle("/user/", middleware.authMiddleware(userMux))
-	mux.Handle("/user/", userMux)
+
+	// mux.Handle("/users/*", userMux)
 }

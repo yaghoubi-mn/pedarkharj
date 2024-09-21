@@ -19,8 +19,11 @@ type validate struct {
 }
 
 func NewValidator() validate {
+	vald := validator_lib.New()
+
+	vald.RegisterValidation("name", func(fl validator_lib.FieldLevel) bool { return true })
 	return validate{
-		validator: validator_lib.New(),
+		validator: vald,
 	}
 }
 
@@ -32,14 +35,19 @@ func (v *validate) Struct(st interface{}) map[string]string {
 	}
 
 	for i := 0; i < val.NumField(); i++ {
-		fieldName := val.Type().Field(i).Name
+		// fieldName := val.Type().Field(i).Name
 		fieldValue := fmt.Sprintf("%v", val.Field(i))
 		fieldTag := val.Type().Field(i).Tag.Get("validate")
+		fieldNameJson := val.Type().Field(i).Tag.Get("json")
 
 		if err := v.ValidateField(fieldValue, fieldTag); err != nil {
-			errMap[fieldName] = err.Error()
+			errMap[fieldNameJson] = err.Error()
 		}
 
+	}
+
+	if len(errMap) == 0 {
+		return nil
 	}
 
 	return errMap
@@ -48,7 +56,12 @@ func (v *validate) Struct(st interface{}) map[string]string {
 func (v *validate) ValidateField(fieldValue, tag string) error {
 	err := v.validator.Var(fieldValue, tag)
 
-	if strings.Contains(tag, "e164") {
+	if strings.Contains(tag, "omitempty") {
+		if fieldValue == "" {
+			return nil
+		}
+
+	} else if strings.Contains(tag, "e164") {
 		if err != nil {
 			return errors.New("invalid phone number")
 		}

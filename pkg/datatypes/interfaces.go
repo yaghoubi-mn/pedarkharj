@@ -7,8 +7,9 @@ type Table interface {
 }
 
 type CacheRepository interface {
-	Save(key string, value interface{}, expireTime time.Duration) error
-	Get(key string) (interface{}, error)
+	Save(key string, value string, expireTime time.Duration) error
+	Get(key string) (string, error)
+	Delete(key string) error
 }
 
 type Validator interface {

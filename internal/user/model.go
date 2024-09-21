@@ -1,35 +1,23 @@
 package user
 
-type User struct {
-	ID     uint64
-	Name   string
-	Number string
+import "time"
 
-	IsRegistered bool
+type User struct {
+	ID       uint64 `gorm:"primaryKey"`
+	Name     string `gorm:"size:20,not null"`
+	Number   string `gorm:"size:13,not null,index"`
+	Password string `gorm:"size:16,not null"`
+	Salt     string `gorm:"size:32,not null"`
+
+	LastLogin    time.Time `gorm:"not null"`
+	RegisteredAt time.Time `gorm:"not null"`
+	IsRegistered bool      `gorm:"not null"`
 }
 
 type Device struct {
-	ID   uint64
-	Name string
+	ID        uint64    `gorm:"primaryKey"`
+	Name      string    `gorm:"size:100,not null"`
+	LoginTime time.Time `gorm:"not null"`
+	Refresh   string    // refresh token
 
-	refresh string // refresh token
-
-}
-
-type VerifyNumberInput struct {
-	Number string `json:"number"`
-	Code   uint   `json:"code"`
-	Token  string `json:"token"` // temporary token
-}
-
-type SignupUserInput struct {
-	Number   string `json:"number" validate:"require,e164"`
-	Name     string `json:"name" validate:"name"`
-	Password string `json:"password" validate:"password"`
-	Token    string `json:"token" validate:"uuid"`
-}
-
-type UserOutput struct {
-	Name   string `json:"name"`
-	Number string `json:"number"`
 }
