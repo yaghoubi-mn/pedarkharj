@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/yaghoubi-mn/pedarkharj/internal/user"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/cache"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -16,10 +17,17 @@ import (
 
 func main() {
 
+	// setup logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	slog.SetDefault(logger)
+
 	// load .env variables
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("WARNING: Cannot load env variables: ", err.Error())
+		slog.Warn("Cannot load env variables", "error", err.Error())
 	}
 
 	// setup database
@@ -30,6 +38,13 @@ func main() {
 
 	// setup validator
 	validatorIns := validator.NewValidator()
+
+	// setup jwt
+	if jwtSecretKey := os.Getenv("JWT_SECRET_KEY"); jwtSecretKey == "" {
+		slog.Error("JWT_SECRET_KEY not found in ENV")
+	} else {
+		jwt.Init(jwtSecretKey)
+	}
 
 	// create router
 	muxV1 := http.NewServeMux()
@@ -44,8 +59,9 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", muxV1))
-	log.Println("listening at :1111")
-	log.Fatal(http.ListenAndServe(":1111", mux))
+
+	slog.Info("listening at http://127.0.0.1:1111")
+	slog.Error(http.ListenAndServe(":1111", mux).Error())
 }
 
 func SetupGrom() *gorm.DB {
@@ -53,14 +69,15 @@ func SetupGrom() *gorm.DB {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Tehran", os.Getenv("DB_HOST"), os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("DB_PORT"))
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalln("ERROR: Cannot connect to database: ", err.Error())
+		slog.Error("Cannot connect to database", "error", err.Error())
+		os.Exit(1)
 	}
 
 	err = db.AutoMigrate(
 		&user.User{},
 	)
 	if err != nil {
-		log.Println("WARNING: Cannot migrate tables: ", err.Error())
+		slog.Warn("Cannot migrate tables", "error", err.Error())
 	}
 
 	return db

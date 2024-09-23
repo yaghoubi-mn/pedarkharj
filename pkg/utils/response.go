@@ -2,7 +2,7 @@ package utils
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
@@ -17,7 +17,10 @@ func JSONResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, m
 
 	json.NewEncoder(w).Encode(mapData)
 
-	log.Println(status, code, mapData)
+	slog.Info("request info",
+		slog.Int("status", status),
+		slog.Any("code", code),
+	)
 }
 
 func JSONStructResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, data datatypes.Table) {
@@ -28,7 +31,7 @@ func JSONStructResponse(w http.ResponseWriter, status int, code rcodes.ResponseC
 // errs example: "name: invalid name"
 func JSONErrorResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, errMap map[string]string) {
 	if errMap == nil {
-		log.Fatalln("errMap is required in JSONResponse")
+		slog.Error("errMap is required in JSONResponse")
 	}
 
 	outData := make(datatypes.Map)
@@ -46,6 +49,6 @@ func JSONErrorResponse(w http.ResponseWriter, status int, code rcodes.ResponseCo
 }
 
 func JSONServerError(w http.ResponseWriter, err error) {
-	log.Println("SERVER ERROR: ", err.Error())
+	slog.Error("SERVER ERROR", "error", err.Error())
 	JSONResponse(w, http.StatusInternalServerError, "", datatypes.Map{"msg": "Server error"})
 }

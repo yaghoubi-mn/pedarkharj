@@ -14,6 +14,7 @@ const (
 	GoSignup          = "go_signup"
 	OTPExpired        = "otp_expired"
 	ZeroCodeFirst     = "zero_code_first"
+	NumberDelay       = "number_delay"
 )
 
 type ResponseCode string
