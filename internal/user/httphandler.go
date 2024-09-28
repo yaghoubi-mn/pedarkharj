@@ -21,7 +21,11 @@ func NewHandler(service UserService) Handler {
 
 func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 	var verifyNumberInput VerifyNumberInput
-	json.NewDecoder(r.Body).Decode(&verifyNumberInput)
+	// decode body
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	decoder.Decode(&verifyNumberInput)
+
 	defer r.Body.Close()
 
 	step, code, tokens, errMap, err := h.service.VerifyNumber(verifyNumberInput)
@@ -59,7 +63,11 @@ func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
 	var userInput SignupUserInput
-	json.NewDecoder(r.Body).Decode(&userInput)
+	// decode body
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	decoder.Decode(&userInput)
+
 	defer r.Body.Close()
 
 	tokens, code, errMap, err := h.service.Signup(userInput)
@@ -75,4 +83,9 @@ func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.JSONResponse(w, 200, "", datatypes.Map{"msg": "done", "refresh": tokens["refresh"], "access": tokens["access"]})
+}
+
+// login user with number and password
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+
 }

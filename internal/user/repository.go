@@ -1,8 +1,6 @@
 package user
 
 import (
-	"errors"
-
 	"github.com/yaghoubi-mn/pedarkharj/pkg/database_errors"
 	"gorm.io/gorm"
 )
@@ -27,7 +25,7 @@ func (repo *GormUserRepository) GetByID(id uint64) (User, error) {
 	var user User
 	if err := repo.DB.Where(User{ID: id}).Find(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return user, errors.New("Record Not Found")
+			return user, database_errors.ErrRecordNotFound
 		}
 
 		return user, err
@@ -61,6 +59,10 @@ func (repo *GormUserRepository) Create(user User) error {
 func (repo *GormUserRepository) Update(user User) error {
 
 	if err := repo.DB.Updates(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return database_errors.ErrRecordNotFound
+		}
+
 		return err
 	}
 
@@ -70,6 +72,10 @@ func (repo *GormUserRepository) Update(user User) error {
 func (repo *GormUserRepository) Delete(id uint64) error {
 
 	if err := repo.DB.Delete(&User{ID: id}).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return database_errors.ErrRecordNotFound
+		}
+
 		return err
 	}
 

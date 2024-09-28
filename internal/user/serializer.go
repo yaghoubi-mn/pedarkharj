@@ -13,6 +13,11 @@ type SignupUserInput struct {
 	Token    string `json:"token" validate:"required,uuid"`
 }
 
+type LoginUserInput struct {
+	Number   string `json:"number" validator:"required,e164"`
+	Password string `json:"password" validator:"size:20"`
+}
+
 type UserOutput struct {
 	Name   string `json:"name"`
 	Number string `json:"number"`

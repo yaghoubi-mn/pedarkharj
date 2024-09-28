@@ -27,10 +27,15 @@ type UserService interface {
 	VerifyNumber(v VerifyNumberInput) (step int, code rcodes.ResponseCode, token map[string]string, errMap map[string]string, err error)
 }
 
+type DeviceRepository interface {
+	CreateWithParam(name string, lastIP string, firstLogin time.Time, lastLogin time.Time, refreshToken string) error
+}
+
 type service struct {
-	repo      UserRepository
-	cacheRepo datatypes.CacheRepository
-	validator datatypes.Validator
+	repo       UserRepository
+	cacheRepo  datatypes.CacheRepository
+	validator  datatypes.Validator
+	deviceRepo DeviceRepository
 }
 
 func NewUserService(repo UserRepository, cacheRepo datatypes.CacheRepository, validator datatypes.Validator) UserService {
@@ -38,6 +43,7 @@ func NewUserService(repo UserRepository, cacheRepo datatypes.CacheRepository, va
 		repo:      repo,
 		cacheRepo: cacheRepo,
 		validator: validator,
+		// deviceRepo: deviceRepo,
 	}
 }
 
@@ -57,7 +63,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput) (int, rcodes
 
 		// check for number delay
 		_, err := s.cacheRepo.Get(verifyNumberInput.Number)
-		err = database_errors.ErrExpired // TODO: remove
+
 		if err != nil {
 			if err == database_errors.ErrExpired || err == database_errors.ErrRecordNotFound {
 
@@ -176,7 +182,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput) (int, rcodes
 			}
 
 			// user found in database
-			refresh, access, err := createRefreshAndAccessFromUser(user)
+			refresh, access, err := createTokensAndUserDevice(user)
 			if err != nil {
 				return 0, "", nil, nil, err
 			}
@@ -264,7 +270,7 @@ func (s *service) Signup(userInput SignupUserInput) (map[string]string, rcodes.R
 
 	// TODO: create device
 
-	refresh, access, err := createRefreshAndAccessFromUser(user)
+	refresh, access, err := createTokensAndUserDevice(user)
 	if err != nil {
 		return tokens, "", nil, err
 	}
@@ -274,6 +280,15 @@ func (s *service) Signup(userInput SignupUserInput) (map[string]string, rcodes.R
 
 	err = s.repo.Create(user)
 	return tokens, "", nil, err
+}
+
+func createTokensAndUserDevice(user User) (refresh string, access string, err error) {
+	refresh, access, err = createRefreshAndAccessFromUser(user)
+
+	// create device
+	// deviceRepo.CreateWithParam()
+
+	return refresh, access, err
 }
 
 func createRefreshAndAccessFromUser(user User) (refresh string, access string, err error) {

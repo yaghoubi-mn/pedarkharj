@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/yaghoubi-mn/pedarkharj/internal/device"
 	"github.com/yaghoubi-mn/pedarkharj/internal/user"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/cache"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
@@ -75,6 +76,7 @@ func SetupGrom() *gorm.DB {
 
 	err = db.AutoMigrate(
 		&user.User{},
+		&device.Device{},
 	)
 	if err != nil {
 		slog.Warn("Cannot migrate tables", "error", err.Error())
