@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strconv"
 	"strings"
 
 	validator_lib "github.com/go-playground/validator/v10"
@@ -23,6 +24,11 @@ func NewValidator() datatypes.Validator {
 	vald := validator_lib.New()
 
 	vald.RegisterValidation("name", func(fl validator_lib.FieldLevel) bool { return true })
+
+	for i := 0; i < 1000; i += 5 {
+
+		vald.RegisterValidation("size:"+strconv.Itoa(i), func(fl validator_lib.FieldLevel) bool { return true })
+	}
 	return &validate{
 		validator: vald,
 	}

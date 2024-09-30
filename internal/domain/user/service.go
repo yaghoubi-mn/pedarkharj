@@ -39,7 +39,7 @@ func (s *service) VerifyNumber(number string, code uint, token string, isBlocked
 		return err
 	}
 
-	if code > 99999 || code < 10000 {
+	if (code > 99999 || code < 10000) && code != 0 {
 		return errors.New("code: invalid code")
 	}
 

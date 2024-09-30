@@ -59,6 +59,9 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 		// check for number delay
 		_, err := s.cacheRepo.Get(verifyNumberInput.Number)
 
+		if config.Debug {
+			err = database_errors.ErrExpired
+		}
 		if err != nil {
 			if err == database_errors.ErrExpired || err == database_errors.ErrRecordNotFound {
 
