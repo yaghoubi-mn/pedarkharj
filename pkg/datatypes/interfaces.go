@@ -1,6 +1,11 @@
 package datatypes
 
-import "time"
+import (
+	"net/http"
+	"time"
+
+	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
+)
 
 type Table interface {
 	Table() string
@@ -13,5 +18,12 @@ type CacheRepository interface {
 }
 
 type Validator interface {
-	Struct(st interface{}) map[string]string
+	ValidateField(v any, tag string) error
+}
+
+type Response interface {
+	Response(w http.ResponseWriter, status int, code rcodes.ResponseCode, mapData Map)
+	StructResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, data Table)
+	ErrorResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, errs ...error)
+	ServerErrorResponse(w http.ResponseWriter, err error)
 }

@@ -7,9 +7,14 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/yaghoubi-mn/pedarkharj/internal/device"
-	"github.com/yaghoubi-mn/pedarkharj/internal/user"
+	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
+	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
+	domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
+	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
+	gorm_repository "github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/repository/gorm"
+	interfaces_rest_v1 "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/cache"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
 	"gorm.io/driver/postgres"
@@ -47,22 +52,30 @@ func main() {
 		jwt.Init(jwtSecretKey)
 	}
 
-	// create router
-	muxV1 := http.NewServeMux()
-
-	// user setup
-	userRepo := user.NewGormUserRepository(db)
-	userService := user.NewUserService(userRepo, cacheRepo, &validatorIns)
-	userHandler := user.NewHandler(userService)
-	user.Route("/users", muxV1, userHandler)
-
-	// mux.Handle("/", middleware(fun))
-	mux := http.NewServeMux()
-
-	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", muxV1))
+	mux := setupRouter(db, validatorIns, cacheRepo)
 
 	slog.Info("listening at http://127.0.0.1:1111")
 	slog.Error(http.ListenAndServe(":1111", mux).Error())
+}
+
+func setupRouter(db *gorm.DB, validatorIns datatypes.Validator, cacheRepo datatypes.CacheRepository) *http.ServeMux {
+
+	// setup domain
+	userDomainService := domain_user.NewUserService(validatorIns)
+	deviceDomainService := domain_device.NewDeviceService(validatorIns)
+
+	// setup repository
+	userRepo := gorm_repository.NewGormUserRepository(db)
+	deviceRepo := gorm_repository.NewGormDeviceRepository(db)
+
+	// setup application
+	deviceAppService := app_device.NewDeviceAppService(deviceRepo, deviceDomainService)
+	userAppService := app_user.NewUserService(userRepo, cacheRepo, deviceAppService, userDomainService)
+
+	// setup router
+	muxV1 := interfaces_rest_v1.NewRouter(userAppService)
+
+	return muxV1
 }
 
 func SetupGrom() *gorm.DB {
@@ -75,8 +88,8 @@ func SetupGrom() *gorm.DB {
 	}
 
 	err = db.AutoMigrate(
-		&user.User{},
-		&device.Device{},
+		&domain_user.User{},
+		&domain_device.Device{},
 	)
 	if err != nil {
 		slog.Warn("Cannot migrate tables", "error", err.Error())

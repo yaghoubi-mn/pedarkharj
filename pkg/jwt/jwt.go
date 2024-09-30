@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"errors"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -54,4 +55,38 @@ func VerifyJwt(tokenString string) (map[string]any, error) {
 
 	return mapClaims, nil
 
+}
+
+func CreateRefreshAndAccessFromUser(refreshExpireMinutes time.Duration, accessExpireMinutes time.Duration, name string, number string, isRegistered bool) (refresh string, access string, err error) {
+	refresh, err = CreateJwt(map[string]any{
+		"exp": time.Now().Add(refreshExpireMinutes * time.Minute),
+	})
+
+	if err != nil {
+		return "", "", err
+	}
+
+	access, err = CreateJwt(map[string]any{
+		"exp":          time.Now().Add(accessExpireMinutes * time.Minute),
+		"name":         name,
+		"number":       number,
+		"isRegistered": isRegistered,
+	})
+
+	return refresh, access, err
+
+}
+
+func getUserFromAccess(access string) (name string, number string, isRegistered bool, err error) {
+
+	mapClaims, err := VerifyJwt(access)
+	if err != nil {
+		return "", "", false, err
+	}
+
+	name = mapClaims["name"].(string)
+	number = mapClaims["number"].(string)
+	isRegistered = mapClaims["isRegistered"].(bool)
+
+	return name, number, isRegistered, nil
 }

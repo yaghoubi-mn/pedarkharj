@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	validator_lib "github.com/go-playground/validator/v10"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 )
 
 const (
@@ -18,17 +19,16 @@ type validate struct {
 	validator *validator_lib.Validate
 }
 
-func NewValidator() validate {
+func NewValidator() datatypes.Validator {
 	vald := validator_lib.New()
 
 	vald.RegisterValidation("name", func(fl validator_lib.FieldLevel) bool { return true })
-	return validate{
+	return &validate{
 		validator: vald,
 	}
 }
 
-func (v *validate) Struct(st interface{}) map[string]string {
-	errMap := make(map[string]string)
+func (v *validate) Struct(st interface{}) (fieldName string, err error) {
 	val := reflect.ValueOf(st)
 	if val.Kind() != reflect.Struct {
 		log.Fatalln("type of st is not struct")
@@ -41,19 +41,15 @@ func (v *validate) Struct(st interface{}) map[string]string {
 		fieldNameJson := val.Type().Field(i).Tag.Get("json")
 
 		if err := v.ValidateField(fieldValue, fieldTag); err != nil {
-			errMap[fieldNameJson] = err.Error()
+			return fieldNameJson, err
 		}
 
 	}
 
-	if len(errMap) == 0 {
-		return nil
-	}
-
-	return errMap
+	return "", nil
 }
 
-func (v *validate) ValidateField(fieldValue, tag string) error {
+func (v *validate) ValidateField(fieldValue any, tag string) error {
 	err := v.validator.Var(fieldValue, tag)
 
 	if strings.Contains(tag, "omitempty") {
@@ -68,7 +64,7 @@ func (v *validate) ValidateField(fieldValue, tag string) error {
 	} else if strings.Contains(tag, "name") {
 
 		for char := range INVALID_NAME_CHARS {
-			if strings.Contains(fieldValue, string(char)) {
+			if strings.Contains(fieldValue.(string), string(char)) {
 				return errors.New("invalid character: " + string(char))
 			}
 		}
