@@ -19,8 +19,9 @@ import (
 )
 
 type UserAppService interface {
-	VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (step int, responseCode rcodes.ResponseCode, tokens map[string]string, userError error, serverError error)
-	Signup(userInput SignupUserInput, deviceName string, deviceIP string) (tokens map[string]string, responseCode rcodes.ResponseCode, userError error, serverError error)
+	VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (step int, responseCode rcodes.ResponseCode, tokens map[string]any, userError error, serverError error)
+	Signup(userInput SignupUserInput, deviceName string, deviceIP string) (tokens map[string]any, responseCode rcodes.ResponseCode, userError error, serverError error)
+	GetUserInfo(user domain_user.User) UserOutput
 }
 
 type deviceRepository interface {
@@ -43,11 +44,11 @@ func NewUserService(repo domain_user.UserDomainRepository, cacheRepo datatypes.C
 	}
 }
 
-func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (int, rcodes.ResponseCode, map[string]string, error, error) {
+func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (int, rcodes.ResponseCode, map[string]any, error, error) {
 
 	// isBlocked will checked in step 2
 	err := s.domainService.VerifyNumber(verifyNumberInput.Number, verifyNumberInput.Code, verifyNumberInput.Token, false)
-	tokens := make(map[string]string)
+	tokens := make(map[string]any)
 
 	if err != nil {
 		return 0, rcodes.InvalidField, tokens, err, nil
@@ -180,7 +181,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 			}
 
 			// user found in database
-			refresh, access, err := jwt.CreateRefreshAndAccessFromUser(config.JWtRefreshExpireMinutes, config.JWTAccessExpireMinutes, user.Name, user.Number, user.IsRegistered)
+			refresh, access, err := jwt.CreateRefreshAndAccessFromUser(config.JWtRefreshExpireMinutes, config.JWTAccessExpireMinutes, user.ID, user.Name, user.Number, user.IsRegistered)
 			if err != nil {
 				return 0, "", nil, nil, err
 			}
@@ -199,6 +200,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 
 			tokens["refresh"] = refresh
 			tokens["access"] = access
+			tokens["accessExpireSeconds"] = config.JWTAccessExpireMinutes.Seconds()
 			return 3, "", tokens, nil, nil
 
 		} else {
@@ -208,13 +210,13 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 	}
 }
 
-func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP string) (map[string]string, rcodes.ResponseCode, error, error) {
+func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP string) (map[string]any, rcodes.ResponseCode, error, error) {
 	var user domain_user.User
 	user.Number = userInput.Number
 	user.Name = userInput.Name
 	user.Password = userInput.Password
 	err := s.domainService.Signup(&user, userInput.Token)
-	tokens := make(map[string]string)
+	tokens := make(map[string]any)
 
 	if err != nil {
 		return tokens, rcodes.InvalidField, err, nil
@@ -253,7 +255,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		return nil, "", nil, err
 	}
 
-	refresh, access, err := jwt.CreateRefreshAndAccessFromUser(config.JWtRefreshExpireMinutes, config.JWTAccessExpireMinutes, user.Name, user.Number, user.IsRegistered)
+	refresh, access, err := jwt.CreateRefreshAndAccessFromUser(config.JWtRefreshExpireMinutes, config.JWTAccessExpireMinutes, user.ID, user.Name, user.Number, user.IsRegistered)
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -271,7 +273,16 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 
 	tokens["refresh"] = refresh
 	tokens["access"] = access
+	tokens["accessExpireSeconds"] = config.JWTAccessExpireMinutes.Seconds()
 
 	err = s.repo.Create(user)
 	return tokens, "", nil, err
+}
+
+func (s *service) GetUserInfo(user domain_user.User) UserOutput {
+
+	var userOutput UserOutput
+	userOutput.Fill(user)
+
+	return userOutput
 }

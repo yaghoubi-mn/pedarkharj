@@ -31,7 +31,7 @@ func (j *jsonResponse) Response(w http.ResponseWriter, status int, code rcodes.R
 	)
 }
 
-func (j *jsonResponse) StructResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, data datatypes.Table) {
+func (j *jsonResponse) StructResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, data any) {
 	outData := make(datatypes.Map)
 	outData["data"] = data
 	j.Response(w, status, code, outData)

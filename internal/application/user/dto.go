@@ -1,5 +1,7 @@
 package app_user
 
+import domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
+
 type VerifyNumberInput struct {
 	Number string `json:"number" validate:"required,e164"`
 	Code   uint   `json:"code"`
@@ -21,4 +23,9 @@ type LoginUserInput struct {
 type UserOutput struct {
 	Name   string `json:"name"`
 	Number string `json:"number"`
+}
+
+func (u *UserOutput) Fill(user domain_user.User) {
+	u.Name = user.Name
+	u.Number = user.Number
 }

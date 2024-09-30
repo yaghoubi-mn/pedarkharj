@@ -57,9 +57,9 @@ func VerifyJwt(tokenString string) (map[string]any, error) {
 
 }
 
-func CreateRefreshAndAccessFromUser(refreshExpireMinutes time.Duration, accessExpireMinutes time.Duration, name string, number string, isRegistered bool) (refresh string, access string, err error) {
+func CreateRefreshAndAccessFromUser(refreshExpireMinutes time.Duration, accessExpireMinutes time.Duration, id uint64, name string, number string, isRegistered bool) (refresh string, access string, err error) {
 	refresh, err = CreateJwt(map[string]any{
-		"exp": time.Now().Add(refreshExpireMinutes * time.Minute),
+		"exp": time.Now().Add(refreshExpireMinutes * time.Minute).Unix(),
 	})
 
 	if err != nil {
@@ -67,7 +67,8 @@ func CreateRefreshAndAccessFromUser(refreshExpireMinutes time.Duration, accessEx
 	}
 
 	access, err = CreateJwt(map[string]any{
-		"exp":          time.Now().Add(accessExpireMinutes * time.Minute),
+		"exp":          time.Now().Add(accessExpireMinutes * time.Minute).Unix(),
+		"id":           id,
 		"name":         name,
 		"number":       number,
 		"isRegistered": isRegistered,
@@ -77,16 +78,17 @@ func CreateRefreshAndAccessFromUser(refreshExpireMinutes time.Duration, accessEx
 
 }
 
-func getUserFromAccess(access string) (name string, number string, isRegistered bool, err error) {
+func GetUserFromAccess(access string) (id uint64, name string, number string, isRegistered bool, err error) {
 
 	mapClaims, err := VerifyJwt(access)
 	if err != nil {
-		return "", "", false, err
+		return 0, "", "", false, err
 	}
 
+	id = uint64(mapClaims["id"].(float64))
 	name = mapClaims["name"].(string)
 	number = mapClaims["number"].(string)
 	isRegistered = mapClaims["isRegistered"].(bool)
 
-	return name, number, isRegistered, nil
+	return id, name, number, isRegistered, nil
 }

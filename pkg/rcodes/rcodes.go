@@ -6,6 +6,9 @@ const (
 	// global
 	InvalidField      = "invalid_field"
 	InvalidQueryParam = "invalid_query_param"
+	InvalidHeader     = "invalid_header"
+	InvalidToken      = "invalid_token"
+	Unauthenticated   = "unauthenticated"
 
 	// user
 	CodeSendToNumber  = "code_sent_to_number"

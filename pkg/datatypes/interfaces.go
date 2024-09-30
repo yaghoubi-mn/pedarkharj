@@ -23,7 +23,7 @@ type Validator interface {
 
 type Response interface {
 	Response(w http.ResponseWriter, status int, code rcodes.ResponseCode, mapData Map)
-	StructResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, data Table)
+	StructResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, data any)
 	ErrorResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, errs ...error)
 	ServerErrorResponse(w http.ResponseWriter, err error)
 }

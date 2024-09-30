@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
+	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 )
@@ -59,7 +60,7 @@ func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 
 	// user sent otp code and otp is currect. user already exists in database
 	if step == 3 {
-		h.response.Response(w, 200, code, datatypes.Map{"msg": "You are in!", "refresh": tokens["refresh"], "access": tokens["access"]})
+		h.response.Response(w, 200, code, datatypes.Map{"msg": "You are in!", "refresh": tokens["refresh"], "access": tokens["access"], "accessExpireSeconds": tokens["accessExpireSeconds"]})
 		return
 	}
 
@@ -91,10 +92,29 @@ func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	h.response.Response(w, 200, "", datatypes.Map{"msg": "done", "refresh": tokens["refresh"], "access": tokens["access"]})
+	h.response.Response(w, 200, "", datatypes.Map{"msg": "done", "refresh": tokens["refresh"], "access": tokens["access"], "accessExpireSeconds": tokens["accessExpireSeconds"]})
 }
 
 // login user with number and password
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
+}
+
+func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+
+	iUser := r.Context().Value("user")
+	if iUser == nil {
+		h.response.ServerErrorResponse(w, errors.New("user is nil in request context"))
+		return
+	}
+
+	user, ok := iUser.(domain_user.User)
+	if !ok {
+		h.response.ServerErrorResponse(w, errors.New("cannot cast request context user"))
+		return
+	}
+
+	outData := h.appService.GetUserInfo(user)
+
+	h.response.StructResponse(w, 200, "", outData)
 }
