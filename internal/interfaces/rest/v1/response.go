@@ -28,6 +28,7 @@ func (j *jsonResponse) Response(w http.ResponseWriter, status int, code rcodes.R
 	slog.Info("request info",
 		slog.Int("status", status),
 		slog.Any("code", code),
+		slog.Any("data", mapData),
 	)
 }
 
