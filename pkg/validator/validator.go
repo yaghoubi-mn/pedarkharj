@@ -24,6 +24,7 @@ func NewValidator() datatypes.Validator {
 	vald := validator_lib.New()
 
 	vald.RegisterValidation("name", func(fl validator_lib.FieldLevel) bool { return true })
+	vald.RegisterValidation("allowempty", func(fl validator_lib.FieldLevel) bool { return true })
 
 	for i := 0; i < 1000; i += 5 {
 
@@ -58,7 +59,7 @@ func (v *validate) Struct(st interface{}) (fieldName string, err error) {
 func (v *validate) ValidateField(fieldValue any, tag string) error {
 	err := v.validator.Var(fieldValue, tag)
 
-	if strings.Contains(tag, "omitempty") {
+	if strings.Contains(tag, "allowempty") {
 		if fieldValue == "" {
 			return nil
 		}

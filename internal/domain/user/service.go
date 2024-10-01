@@ -43,7 +43,7 @@ func (s *service) VerifyNumber(number string, code uint, token string, isBlocked
 		return errors.New("code: invalid code")
 	}
 
-	err = s.validator.ValidateField(token, "uuid")
+	err = s.validator.ValidateField(token, "uuid,allowempty")
 	if err != nil {
 		return err
 	}
