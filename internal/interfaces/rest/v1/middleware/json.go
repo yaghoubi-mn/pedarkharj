@@ -28,7 +28,7 @@ func (j *jsonMiddleware) EnsureApplicationJson(next http.Handler) http.Handler {
 
 		w.Header().Add("Access-Control-Allow-Origin", "http://localhost:3000")
 		w.Header().Add("Access-Control-Allow-Methods", "POST, OPTIONS, GET, DELETE, PUT")
-		w.Header().Add("Access-Control-Allow-Headers", "content-type")
+		w.Header().Add("Access-Control-Allow-Headers", "content-type, access-control-allow-origin, accept, user-agent, authorization")
 		w.Header().Add("Access-Control-Allow-Max-Age", "86400")
 		next.ServeHTTP(w, r)
 
