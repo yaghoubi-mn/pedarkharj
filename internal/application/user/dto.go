@@ -8,6 +8,10 @@ type VerifyNumberInput struct {
 	Token  string `json:"token" validate:"uuid,omitempty"` // temporary token
 }
 
+type NumberInput struct {
+	Number string `json:"number"`
+}
+
 type SignupUserInput struct {
 	Number   string `json:"number" validate:"required,e164"` // TODO: size 13
 	Name     string `json:"name" validate:"required,name"`

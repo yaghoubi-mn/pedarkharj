@@ -23,10 +23,6 @@ func (j *jsonMiddleware) EnsureApplicationJson(next http.Handler) http.Handler {
 
 		if r.Method == "POST" {
 
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, DELETE, PUT")
-			w.Header().Set("Access-Control-Allow-Headers", "content-type, access-control-allow-origin, accept, user-agent, authorization")
-			w.Header().Set("Access-Control-Allow-Max-Age", "86400")
 			// return
 			if r.Header.Get("Content-Type") != "application/json" {
 				j.response.ErrorResponse(w, 400, rcodes.InvalidHeader, errors.New("header application/json is required"))
@@ -34,6 +30,17 @@ func (j *jsonMiddleware) EnsureApplicationJson(next http.Handler) http.Handler {
 			}
 		}
 		// w.Header().Add("")
+		next.ServeHTTP(w, r)
+
+	})
+}
+
+func (j *jsonMiddleware) AddCORSHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, DELETE, PUT")
+		w.Header().Set("Access-Control-Allow-Headers", "content-type, access-control-allow-origin, accept, user-agent, authorization")
+		w.Header().Set("Access-Control-Allow-Max-Age", "86400")
 		next.ServeHTTP(w, r)
 
 	})

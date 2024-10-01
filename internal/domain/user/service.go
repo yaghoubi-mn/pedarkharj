@@ -11,6 +11,7 @@ import (
 type UserDomainService interface {
 	Signup(user *User, token string) error
 	VerifyNumber(number string, code uint, token string, isBlocked bool) error
+	CheckNumber(number string) error
 }
 
 type DeviceRepository interface {
@@ -81,4 +82,10 @@ func (s *service) Signup(user *User, token string) error {
 	}
 
 	return nil
+}
+
+func (s *service) CheckNumber(number string) error {
+
+	err := s.validator.ValidateField(number, "e164,required")
+	return err
 }

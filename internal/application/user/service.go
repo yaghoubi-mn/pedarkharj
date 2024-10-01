@@ -22,6 +22,7 @@ type UserAppService interface {
 	VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (step int, responseCode rcodes.ResponseCode, tokens map[string]any, userError error, serverError error)
 	Signup(userInput SignupUserInput, deviceName string, deviceIP string) (tokens map[string]any, responseCode rcodes.ResponseCode, userError error, serverError error)
 	GetUserInfo(user domain_user.User) UserOutput
+	CheckNumber(numberInput NumberInput) (isExist bool, err error)
 }
 
 type deviceRepository interface {
@@ -285,4 +286,24 @@ func (s *service) GetUserInfo(user domain_user.User) UserOutput {
 	userOutput.Fill(user)
 
 	return userOutput
+}
+
+func (s *service) CheckNumber(numberInput NumberInput) (bool, error) {
+
+	err := s.domainService.CheckNumber(numberInput.Number)
+	if err != nil {
+		return false, err
+	}
+
+	_, err = s.repo.GetByNumber(numberInput.Number)
+
+	if err != nil {
+		if err == database_errors.ErrRecordNotFound {
+			return false, nil
+		}
+		return false, err
+	} else {
+		return true, nil
+	}
+
 }

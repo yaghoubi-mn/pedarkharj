@@ -118,3 +118,26 @@ func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 
 	h.response.StructResponse(w, 200, "", outData)
 }
+
+func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
+
+	var numberInput app_user.NumberInput
+
+	json.NewDecoder(r.Body).Decode(&numberInput)
+
+	isExist, err := h.appService.CheckNumber(numberInput)
+
+	if err != nil {
+		h.response.ServerErrorResponse(w, err)
+		return
+	}
+
+	if isExist {
+		h.response.Response(w, 200, "", datatypes.Map{})
+		return
+	} else {
+		h.response.ErrorResponse(w, 404, "", errors.New("number: number not found"))
+		return
+	}
+
+}
