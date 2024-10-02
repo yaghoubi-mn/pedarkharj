@@ -25,17 +25,13 @@ func NewRouter(userAppService app_user.UserAppService) *http.ServeMux {
 	mux.HandleFunc("POST /users/verify-number", userHandler.VerifyNumber)
 	mux.HandleFunc("POST /users/signup", userHandler.SignupUser)
 	mux.HandleFunc("POST /users/check-number", userHandler.CheckNumber)
+	mux.HandleFunc("POST /users/login", userHandler.Login)
 	authMux.HandleFunc("GET /users/info", userHandler.GetUserInfo)
 
+	// handle options
 	mux.HandleFunc("OPTIONS /users/verify-number", func(w http.ResponseWriter, r *http.Request) {})
-
-	// 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	// 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, DELETE, PUT")
-	// 	w.Header().Set("Access-Control-Allow-Headers", "content-type, access-control-allow-origin, accept, user-agent, authorization")
-	// 	w.Header().Set("Access-Control-Allow-Max-Age", "86400")
-	// 	w.Write([]byte("r"))
-	// })
 	mux.HandleFunc("OPTIONS /users/check-number", func(w http.ResponseWriter, r *http.Request) {})
+	mux.HandleFunc("OPTIONS /users/login", func(w http.ResponseWriter, r *http.Request) {})
 
 	// connect muxes
 	mux.Handle("/", authMiddleware.EnsureAuthentication(authMux))

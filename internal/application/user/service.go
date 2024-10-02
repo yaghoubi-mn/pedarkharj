@@ -19,10 +19,11 @@ import (
 )
 
 type UserAppService interface {
-	VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (step int, responseCode rcodes.ResponseCode, tokens map[string]any, userError error, serverError error)
-	Signup(userInput SignupUserInput, deviceName string, deviceIP string) (tokens map[string]any, responseCode rcodes.ResponseCode, userError error, serverError error)
+	VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (step int, responseCode rcodes.ResponseCode, tokens map[string]string, userError error, serverError error)
+	Signup(userInput SignupUserInput, deviceName string, deviceIP string) (tokens map[string]string, responseCode rcodes.ResponseCode, userError error, serverError error)
 	GetUserInfo(user domain_user.User) UserOutput
 	CheckNumber(numberInput NumberInput) (isExist bool, err error)
+	Login(loginInput LoginUserInput, deviceName string, deviceIP string) (tokens map[string]string, responseCode rcodes.ResponseCode, userError error, serverError error)
 }
 
 type deviceRepository interface {
@@ -45,14 +46,17 @@ func NewUserService(repo domain_user.UserDomainRepository, cacheRepo datatypes.C
 	}
 }
 
-func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (int, rcodes.ResponseCode, map[string]any, error, error) {
+func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (int, rcodes.ResponseCode, map[string]string, error, error) {
 
 	// isBlocked will checked in step 2
-	err := s.domainService.VerifyNumber(verifyNumberInput.Number, verifyNumberInput.Code, verifyNumberInput.Token, false)
-	tokens := make(map[string]any)
+	tokens := make(map[string]string)
 
-	if err != nil {
-		return 0, rcodes.InvalidField, tokens, err, nil
+	userErr, serverErr := s.domainService.VerifyNumber(verifyNumberInput.Number, verifyNumberInput.Code, verifyNumberInput.Token, false)
+	if serverErr != nil {
+		return 0, "", nil, nil, serverErr
+	}
+	if userErr != nil {
+		return 0, rcodes.InvalidField, tokens, userErr, nil
 	}
 
 	if verifyNumberInput.Code == 0 {
@@ -150,9 +154,12 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 			}
 
 			// call domain service
-			err2 = s.domainService.VerifyNumber(user.Number, uint(otpInt), token, user.IsBlocked)
-			if err2 != nil {
-				return 0, "", nil, err2, nil
+			userErr, serverErr = s.domainService.VerifyNumber(user.Number, uint(otpInt), token, user.IsBlocked)
+			if serverErr != nil {
+				return 0, "", nil, nil, serverErr
+			}
+			if userErr != nil {
+				return 0, "", nil, userErr, nil
 			}
 
 			if err != nil {
@@ -182,7 +189,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 			}
 
 			// user found in database
-			refresh, access, err := jwt.CreateRefreshAndAccessFromUser(config.JWtRefreshExpireMinutes, config.JWTAccessExpireMinutes, user.ID, user.Name, user.Number, user.IsRegistered)
+			tokens, err := jwt.CreateRefreshAndAccessFromUserWithMap(config.JWtRefreshExpireMinutes, config.JWTAccessExpireMinutes, user.ID, user.Name, user.Number, user.IsRegistered)
 			if err != nil {
 				return 0, "", nil, nil, err
 			}
@@ -192,16 +199,13 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 			err = s.deviceAppService.CreateOrUpdate(app_device.DeviceInput{
 				Name:         deviceName,
 				IP:           deviceIP,
-				RefreshToken: refresh,
+				RefreshToken: tokens["refresh"],
 				UserID:       user.ID,
 			})
 			if err != nil {
 				return 0, "", nil, nil, err
 			}
 
-			tokens["refresh"] = refresh
-			tokens["access"] = access
-			tokens["accessExpireSeconds"] = config.JWTAccessExpireMinutes.Seconds()
 			return 3, "", tokens, nil, nil
 
 		} else {
@@ -211,16 +215,18 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 	}
 }
 
-func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP string) (map[string]any, rcodes.ResponseCode, error, error) {
+func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP string) (map[string]string, rcodes.ResponseCode, error, error) {
 	var user domain_user.User
 	user.Number = userInput.Number
 	user.Name = userInput.Name
 	user.Password = userInput.Password
-	err := s.domainService.Signup(&user, userInput.Token)
-	tokens := make(map[string]any)
 
-	if err != nil {
-		return tokens, rcodes.InvalidField, err, nil
+	userErr, serverErr := s.domainService.Signup(&user, userInput.Token)
+	if serverErr != nil {
+		return nil, "", nil, serverErr
+	}
+	if userErr != nil {
+		return nil, rcodes.InvalidField, userErr, nil
 	}
 
 	verifyInfoString, err := s.cacheRepo.Get(userInput.Number)
@@ -248,7 +254,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 	verify, ok := verifyInfo["verify"]
 	if !ok || verify != "signup" {
 
-		return tokens, rcodes.VerifyNumberFirst, errors.New("verify number first"), nil
+		return nil, rcodes.VerifyNumberFirst, errors.New("verify number first"), nil
 	}
 
 	// delete cache
@@ -256,7 +262,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		return nil, "", nil, err
 	}
 
-	refresh, access, err := jwt.CreateRefreshAndAccessFromUser(config.JWtRefreshExpireMinutes, config.JWTAccessExpireMinutes, user.ID, user.Name, user.Number, user.IsRegistered)
+	tokens, err := jwt.CreateRefreshAndAccessFromUserWithMap(config.JWtRefreshExpireMinutes, config.JWTAccessExpireMinutes, user.ID, user.Name, user.Number, user.IsRegistered)
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -266,15 +272,11 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		UserID:       user.ID,
 		Name:         deviceName,
 		IP:           deviceIP,
-		RefreshToken: refresh,
+		RefreshToken: tokens["refresh"],
 	})
 	if err != nil {
 		return nil, "", nil, err
 	}
-
-	tokens["refresh"] = refresh
-	tokens["access"] = access
-	tokens["accessExpireSeconds"] = config.JWTAccessExpireMinutes.Seconds()
 
 	err = s.repo.Create(user)
 	return tokens, "", nil, err
@@ -306,4 +308,38 @@ func (s *service) CheckNumber(numberInput NumberInput) (bool, error) {
 		return true, nil
 	}
 
+}
+
+func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP string) (map[string]string, rcodes.ResponseCode, error, error) {
+
+	user, err := s.repo.GetByNumber(loginInput.Number)
+	if err != nil {
+		return nil, "", nil, err
+	}
+
+	userErr, serverErr := s.domainService.Login(user.Number, loginInput.Password, user.Password, user.Salt)
+	if serverErr != nil {
+		return nil, "", nil, serverErr
+	}
+	if userErr != nil {
+		return nil, rcodes.InvalidField, userErr, nil
+	}
+
+	tokens, err := jwt.CreateRefreshAndAccessFromUserWithMap(config.JWtRefreshExpireMinutes, config.JWTAccessExpireMinutes, user.ID, user.Name, user.Number, user.IsRegistered)
+	if err != nil {
+		return nil, "", nil, err
+	}
+
+	// create device
+	err = s.deviceAppService.CreateOrUpdate(app_device.DeviceInput{
+		UserID:       user.ID,
+		Name:         deviceName,
+		IP:           deviceIP,
+		RefreshToken: tokens["refresh"],
+	})
+	if err != nil {
+		return nil, "", nil, err
+	}
+
+	return tokens, "", nil, nil
 }

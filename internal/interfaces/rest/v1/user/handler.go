@@ -97,7 +97,23 @@ func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
 
 // login user with number and password
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	var userInput app_user.LoginUserInput
+	// decode body
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	decoder.Decode(&userInput)
 
+	tokens, responseCode, userErr, serverErr := h.appService.Login(userInput, utils.GetUserAgent(r), utils.GetIPAddress(r))
+	if serverErr != nil {
+		h.response.ServerErrorResponse(w, serverErr)
+		return
+	}
+	if userErr != nil {
+		h.response.ErrorResponse(w, 400, responseCode, userErr)
+		return
+	}
+
+	h.response.Response(w, 200, responseCode, datatypes.Map{"msg": "done", "refresh": tokens["refresh"], "access": tokens["access"], "accessExpireSeconds": tokens["accessExpireSeconds"]})
 }
 
 func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {

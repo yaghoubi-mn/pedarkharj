@@ -11,6 +11,7 @@ import (
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
 	domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
+	_ "github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/config"
 	gorm_repository "github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/repository/gorm"
 	interfaces_rest_v1 "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/cache"
@@ -22,7 +23,6 @@ import (
 )
 
 func main() {
-
 	// setup logger
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,

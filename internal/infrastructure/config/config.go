@@ -7,3 +7,13 @@ const (
 	JWTAccessExpireMinutes  time.Duration = 15
 	Debug                                 = true
 )
+
+var (
+	BcryptCost = 16
+)
+
+func init() {
+	if Debug {
+		BcryptCost = 1
+	}
+}

@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -91,4 +92,15 @@ func GetUserFromAccess(access string) (id uint64, name string, number string, is
 	isRegistered = mapClaims["isRegistered"].(bool)
 
 	return id, name, number, isRegistered, nil
+}
+
+func CreateRefreshAndAccessFromUserWithMap(refreshExpireMinutes time.Duration, accessExpireMinutes time.Duration, id uint64, name string, number string, isRegistered bool) (tokens map[string]string, err error) {
+	tokens = make(map[string]string)
+
+	refresh, access, err := CreateRefreshAndAccessFromUser(refreshExpireMinutes, accessExpireMinutes, id, name, number, isRegistered)
+	tokens["refresh"] = refresh
+	tokens["access"] = access
+	tokens["accessExpireSeconds"] = strconv.Itoa(int(accessExpireMinutes.Seconds()))
+
+	return
 }
