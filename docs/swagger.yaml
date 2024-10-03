@@ -5,5 +5,116 @@ info:
   description: Pedarkharj project
   title: Pedarkharj
   version: 1.0.0
-paths: {}
+paths:
+  /users/info:
+    get:
+      consumes:
+      - application/json
+      description: get user info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      tags:
+      - users
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: login user with number and password
+      parameters:
+      - description: phone number
+        example: "+98123456789"
+        in: body
+        name: number
+        required: true
+        schema:
+          type: string
+      - description: Password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: 'BadRequest:<br>code=invalid_field: a field is invalid'
+        "500":
+          description: Internal Server Error
+      tags:
+      - users
+  /users/signup:
+    post:
+      consumes:
+      - application/json
+      description: Signup user. User must be verify number first.
+      parameters:
+      - description: phone number
+        example: "+98123456789"
+        in: body
+        name: number
+        required: true
+        schema:
+          type: string
+      - description: OTP code
+        example: test
+        in: body
+        name: name
+        required: true
+        schema:
+          type: string
+      - description: Token
+        in: body
+        name: token
+        required: true
+        schema:
+          type: string
+      - description: Password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: 'BadRequest:<br>code=verify_number_first: User Must be verify
+            number first<br>code=invalid_field: a field is invalid'
+        "500":
+          description: Internal Server Error
+      tags:
+      - users
+  /users/verify-number:
+    post:
+      consumes:
+      - application/json
+      description: Get access token with refresh token
+      parameters:
+      - description: refresh
+        in: body
+        name: refresh
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: BadRequest:<br>code=invalid_field
+        "500":
+          description: Internal Server Error
+      tags:
+      - users
 swagger: "2.0"

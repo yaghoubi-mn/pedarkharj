@@ -29,8 +29,14 @@ func NewHandler(appService app_user.UserAppService, response datatypes.Response)
 // @Tags users
 // @Accept json
 // @Produce json
-// @Parm number code token
-// @Success 200
+// @Param number body string true "phone number" example(+98123456789)
+// @Param code body int true "OTP code" example(12345)
+// @Param token body string true "Token"
+// @Success 200 "Ok. code: code_sent_to_number"
+// @Success 303 "Ok. code: go_signup. verify number done. user must signup"
+// @Failure 500
+// @Failure 400 "BadRequest:<br>code=zero_code_first: Must zero the otp code first.<br>code=wrong_code: The OTP is wrong.<br>code=number_delay: Wait some minutes.<br>code=invalid_field: a field is invalid"
+// @Router /users/verify-number [post]
 func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 	var verifyNumberInput app_user.VerifyNumberInput
 	// decode body
@@ -79,6 +85,20 @@ func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Signup godoc
+// @Summery signup
+// @Description Signup user. User must be verify number first.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param number body string true "phone number" example(+98123456789)
+// @Param name body string true "OTP code" example(test)
+// @Param token body string true "Token"
+// @Param password body string true "Password"
+// @Success 200
+// @Failure 500
+// @Failure 400 "BadRequest:<br>code=verify_number_first: User Must be verify number first<br>code=invalid_field: a field is invalid"
+// @Router /users/signup [post]
 func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
 	var userInput app_user.SignupUserInput
 	// decode body
@@ -106,7 +126,18 @@ func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
 	h.response.Response(w, 200, "", responseDTO.Data)
 }
 
-// login user with number and password
+// Login godoc
+// @Summery login user
+// @Description login user with number and password
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param number body string true "phone number" example(+98123456789)
+// @Param password body string true "Password"
+// @Success 200
+// @Failure 500
+// @Failure 400 "BadRequest:<br>code=invalid_field: a field is invalid"
+// @Router /users/login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var userInput app_user.LoginUserInput
 	// decode body
@@ -127,6 +158,14 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
 
+// GetUserInfo godoc
+// @Description get user info
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200
+// @Failure 500
+// @Router /users/info [get]
 func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 
 	iUser := r.Context().Value("user")
@@ -146,6 +185,16 @@ func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
 
+// CheckNumber godoc
+// @Description Check number is exist
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param number body string true "phone number" example(+98123456789)
+// @Success 200
+// @Failure 500
+// @Failure 400 "BadRequest:<br>code=invalid_field"
+// @Router /users/verify-number [post]
 func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
 
 	var numberInput app_user.NumberInput
@@ -166,6 +215,16 @@ func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
 	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
 
+// GetAccessFromRefersh godoc
+// @Description Get access token with refresh token
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param refresh body string true "refresh"
+// @Success 200
+// @Failure 500
+// @Failure 400 "BadRequest:<br>code=invalid_field"
+// @Router /users/verify-number [post]
 func (h *Handler) GetAccessFromRefresh(w http.ResponseWriter, r *http.Request) {
 
 	var refreshInput app_user.RefreshInput
