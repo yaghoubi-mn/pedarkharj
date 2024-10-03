@@ -1,0 +1,12 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Pedarkharj project",
+        "title": "Pedarkharj",
+        "contact": {},
+        "version": "1.0.0"
+    },
+    "host": "localhost:1111",
+    "basePath": "/api/v1",
+    "paths": {}
+}

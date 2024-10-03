@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/swaggo/http-swagger/v2"
+	_ "github.com/yaghoubi-mn/pedarkharj/docs"
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
 	domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
@@ -22,6 +24,11 @@ import (
 	"gorm.io/gorm"
 )
 
+// @title Pedarkharj
+// @version 1.0.0
+// @description Pedarkharj project
+// @host localhost:1111
+// @BasePath /api/v1
 func main() {
 	// setup logger
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -53,7 +60,7 @@ func main() {
 	}
 
 	mux := setupRouter(db, validatorIns, cacheRepo)
-
+	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 	slog.Info("listening at http://127.0.0.1:1111")
 	slog.Error(http.ListenAndServe(":1111", mux).Error())
 }

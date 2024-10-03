@@ -23,6 +23,14 @@ func NewHandler(appService app_user.UserAppService, response datatypes.Response)
 	}
 }
 
+// VerifyNumber godoc
+// @Summery verify number
+// @Description verify number with sms
+// @Tags users
+// @Accept json
+// @Produce json
+// @Parm number code token
+// @Success 200
 func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 	var verifyNumberInput app_user.VerifyNumberInput
 	// decode body

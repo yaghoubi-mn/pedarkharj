@@ -25,7 +25,7 @@ type LoginUserInput struct {
 }
 
 type RefreshInput struct {
-	Refresh string `json:"refresh	"`
+	Refresh string `json:"refresh"`
 }
 
 type UserOutput struct {

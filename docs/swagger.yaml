@@ -1,0 +1,9 @@
+basePath: /api/v1
+host: localhost:1111
+info:
+  contact: {}
+  description: Pedarkharj project
+  title: Pedarkharj
+  version: 1.0.0
+paths: {}
+swagger: "2.0"
