@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
+	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/database_errors"
 	"gorm.io/gorm"
 )
@@ -67,4 +68,18 @@ func (repo *GormDeviceRepository) CreateOrUpdate(device domain_device.Device) er
 	}
 
 	return nil
+}
+
+func (repo *GormDeviceRepository) GetUserByRefreshToken(refresh string) (user domain_user.User, err error) {
+
+	var device domain_device.Device
+	if err = repo.DB.Preload("User").Where(domain_device.Device{RefreshToken: refresh}).Find(&device).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return user, database_errors.ErrRecordNotFound
+		}
+
+		return user, err
+	}
+
+	return device.User, nil
 }

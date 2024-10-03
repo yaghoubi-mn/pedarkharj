@@ -35,32 +35,35 @@ func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 	userAgent := utils.GetUserAgent(r)
 	userIP := utils.GetIPAddress(r)
 
-	step, code, tokens, userErr, serverErr := h.appService.VerifyNumber(verifyNumberInput, userAgent, userIP)
-	if serverErr != nil {
-		h.response.ServerErrorResponse(w, serverErr)
+	step, responseDTO := h.appService.VerifyNumber(verifyNumberInput, userAgent, userIP)
+	if responseDTO.ServerErr != nil {
+		h.response.ServerErrorResponse(w, responseDTO.ServerErr)
 		return
 	}
 
-	if userErr != nil {
-		h.response.ErrorResponse(w, http.StatusBadRequest, code, userErr)
+	if responseDTO.UserErr != nil {
+		h.response.ErrorResponse(w, http.StatusBadRequest, responseDTO.ResponseCode, responseDTO.UserErr)
 		return
 	}
 
 	// otp code sent to number
 	if step == 1 {
-		h.response.Response(w, http.StatusOK, code, datatypes.Map{"msg": "Code sent to number.", "token": tokens["token"]})
+		responseDTO.Data["msg"] = "Code sent to number"
+		h.response.Response(w, http.StatusOK, responseDTO.ResponseCode, responseDTO.Data)
 		return
 	}
 
 	// user sent otp code and otp is currect
 	if step == 2 {
-		h.response.Response(w, 303, code, datatypes.Map{"msg": "Number verified. Go signup."})
+		responseDTO.Data["msg"] = "Number verified. Go signup"
+		h.response.Response(w, 303, responseDTO.ResponseCode, responseDTO.Data)
 		return
 	}
 
 	// user sent otp code and otp is currect. user already exists in database
 	if step == 3 {
-		h.response.Response(w, 200, code, datatypes.Map{"msg": "You are in!", "refresh": tokens["refresh"], "access": tokens["access"], "accessExpireSeconds": tokens["accessExpireSeconds"]})
+		responseDTO.Data["msg"] = "You are in!"
+		h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 		return
 	}
 
@@ -80,19 +83,19 @@ func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
 	userAgent := utils.GetUserAgent(r)
 	userIP := utils.GetIPAddress(r)
 
-	tokens, code, userErr, serverErr := h.appService.Signup(userInput, userAgent, userIP)
-	if serverErr != nil {
-		h.response.ServerErrorResponse(w, serverErr)
+	responseDTO := h.appService.Signup(userInput, userAgent, userIP)
+	if responseDTO.ServerErr != nil {
+		h.response.ServerErrorResponse(w, responseDTO.ServerErr)
 		return
 	}
 
-	if userErr != nil {
-		h.response.ErrorResponse(w, http.StatusBadRequest, code, userErr)
+	if responseDTO.UserErr != nil {
+		h.response.ErrorResponse(w, http.StatusBadRequest, responseDTO.ResponseCode, responseDTO.UserErr)
 		return
 
 	}
 
-	h.response.Response(w, 200, "", datatypes.Map{"msg": "done", "refresh": tokens["refresh"], "access": tokens["access"], "accessExpireSeconds": tokens["accessExpireSeconds"]})
+	h.response.Response(w, 200, "", responseDTO.Data)
 }
 
 // login user with number and password
@@ -103,17 +106,17 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	decoder.DisallowUnknownFields()
 	decoder.Decode(&userInput)
 
-	tokens, responseCode, userErr, serverErr := h.appService.Login(userInput, utils.GetUserAgent(r), utils.GetIPAddress(r))
-	if serverErr != nil {
-		h.response.ServerErrorResponse(w, serverErr)
+	responseDTO := h.appService.Login(userInput, utils.GetUserAgent(r), utils.GetIPAddress(r))
+	if responseDTO.ServerErr != nil {
+		h.response.ServerErrorResponse(w, responseDTO.ServerErr)
 		return
 	}
-	if userErr != nil {
-		h.response.ErrorResponse(w, 400, responseCode, userErr)
+	if responseDTO.UserErr != nil {
+		h.response.ErrorResponse(w, 400, responseDTO.ResponseCode, responseDTO.UserErr)
 		return
 	}
 
-	h.response.Response(w, 200, responseCode, datatypes.Map{"msg": "done", "refresh": tokens["refresh"], "access": tokens["access"], "accessExpireSeconds": tokens["accessExpireSeconds"]})
+	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
 
 func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
@@ -130,9 +133,9 @@ func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	outData := h.appService.GetUserInfo(user)
+	responseDTO := h.appService.GetUserInfo(user)
 
-	h.response.StructResponse(w, 200, "", outData)
+	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
 
 func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
@@ -141,19 +144,35 @@ func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
 
 	json.NewDecoder(r.Body).Decode(&numberInput)
 
-	isExist, err := h.appService.CheckNumber(numberInput)
+	responseDTO := h.appService.CheckNumber(numberInput)
 
-	if err != nil {
-		h.response.ServerErrorResponse(w, err)
+	if responseDTO.ServerErr != nil {
+		h.response.ServerErrorResponse(w, responseDTO.ServerErr)
+		return
+	}
+	if responseDTO.UserErr != nil {
+		h.response.ErrorResponse(w, 400, responseDTO.ResponseCode, responseDTO.UserErr)
 		return
 	}
 
-	if isExist {
-		h.response.Response(w, 200, "", datatypes.Map{})
+	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
+}
+
+func (h *Handler) GetAccessFromRefresh(w http.ResponseWriter, r *http.Request) {
+
+	var refreshInput app_user.RefreshInput
+
+	json.NewDecoder(r.Body).Decode(&refreshInput)
+
+	responseDTO := h.appService.GetAccessFromRefresh(refreshInput.Refresh)
+	if responseDTO.ServerErr != nil {
+		h.response.ServerErrorResponse(w, responseDTO.ServerErr)
 		return
-	} else {
-		h.response.ErrorResponse(w, 404, "", errors.New("number: number not found"))
+	}
+	if responseDTO.UserErr != nil {
+		h.response.ErrorResponse(w, 400, responseDTO.ResponseCode, responseDTO.UserErr)
 		return
 	}
 
+	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }

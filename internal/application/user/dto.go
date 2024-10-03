@@ -24,6 +24,10 @@ type LoginUserInput struct {
 	Password string `json:"password" validator:"size:20"`
 }
 
+type RefreshInput struct {
+	Refresh string `json:"refresh	"`
+}
+
 type UserOutput struct {
 	Name   string `json:"name"`
 	Number string `json:"number"`

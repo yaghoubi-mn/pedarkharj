@@ -31,7 +31,7 @@ func CreateJwt(mapClaims map[string]any) (string, error) {
 	return tokenString, err
 }
 
-func VerifyJwt(tokenString string) (map[string]any, error) {
+func VerifyJwt(tokenString string) (mapClaims map[string]any, err error) {
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
@@ -48,7 +48,7 @@ func VerifyJwt(tokenString string) (map[string]any, error) {
 
 	// extract claims
 	jwtMapClaims := token.Claims.(jwt.MapClaims)
-	mapClaims := make(map[string]any)
+	mapClaims = make(map[string]any)
 
 	for key := range jwtMapClaims {
 		mapClaims[key] = jwtMapClaims[key]
@@ -58,9 +58,9 @@ func VerifyJwt(tokenString string) (map[string]any, error) {
 
 }
 
-func CreateRefreshAndAccessFromUser(refreshExpireMinutes time.Duration, accessExpireMinutes time.Duration, id uint64, name string, number string, isRegistered bool) (refresh string, access string, err error) {
+func CreateRefreshAndAccessFromUser(refreshExpireTime time.Duration, accessExpireTime time.Duration, id uint64, name string, number string, isRegistered bool) (refresh string, access string, err error) {
 	refresh, err = CreateJwt(map[string]any{
-		"exp": time.Now().Add(refreshExpireMinutes * time.Minute).Unix(),
+		"exp": time.Now().Add(refreshExpireTime).Unix(),
 	})
 
 	if err != nil {
@@ -68,7 +68,7 @@ func CreateRefreshAndAccessFromUser(refreshExpireMinutes time.Duration, accessEx
 	}
 
 	access, err = CreateJwt(map[string]any{
-		"exp":          time.Now().Add(accessExpireMinutes * time.Minute).Unix(),
+		"exp":          time.Now().Add(accessExpireTime).Unix(),
 		"id":           id,
 		"name":         name,
 		"number":       number,
@@ -76,6 +76,20 @@ func CreateRefreshAndAccessFromUser(refreshExpireMinutes time.Duration, accessEx
 	})
 
 	return refresh, access, err
+
+}
+
+func CreateAccessFromUser(accessExpireTime time.Duration, id uint64, name string, number string, isRegistered bool) (access string, err error) {
+
+	access, err = CreateJwt(map[string]any{
+		"exp":          time.Now().Add(accessExpireTime).Unix(),
+		"id":           id,
+		"name":         name,
+		"number":       number,
+		"isRegistered": isRegistered,
+	})
+
+	return access, err
 
 }
 

@@ -34,3 +34,13 @@ func ConvertStringToMap(s string) (map[string]string, error) {
 	return mp, nil
 
 }
+
+func ConvertMapStringStringToMapStringAny(m map[string]string) (n map[string]any) {
+
+	n = make(map[string]any)
+	for k := range m {
+		n[k] = m[k]
+	}
+
+	return
+}

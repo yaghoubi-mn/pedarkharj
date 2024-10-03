@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
-	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
 )
 
 type jsonResponse struct {
@@ -17,7 +16,7 @@ func NewJSONResponse() datatypes.Response {
 	return &jsonResponse{}
 }
 
-func (j *jsonResponse) Response(w http.ResponseWriter, status int, code rcodes.ResponseCode, mapData datatypes.Map) {
+func (j *jsonResponse) Response(w http.ResponseWriter, status int, code string, mapData datatypes.Map) {
 	mapData["code"] = code
 	mapData["status"] = status
 
@@ -32,14 +31,14 @@ func (j *jsonResponse) Response(w http.ResponseWriter, status int, code rcodes.R
 	)
 }
 
-func (j *jsonResponse) StructResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, data any) {
+func (j *jsonResponse) StructResponse(w http.ResponseWriter, status int, code string, data any) {
 	outData := make(datatypes.Map)
 	outData["data"] = data
 	j.Response(w, status, code, outData)
 }
 
 // errs example: "name: invalid name"
-func (j *jsonResponse) ErrorResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, errs ...error) {
+func (j *jsonResponse) ErrorResponse(w http.ResponseWriter, status int, code string, errs ...error) {
 	if errs == nil {
 		slog.Error("err is required in JSONErrorResponse")
 	}

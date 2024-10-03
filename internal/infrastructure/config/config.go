@@ -3,9 +3,9 @@ package config
 import "time"
 
 const (
-	JWtRefreshExpireMinutes time.Duration = 30 * 24 * 60
-	JWTAccessExpireMinutes  time.Duration = 15
-	Debug                                 = true
+	JWtRefreshExpire = 30 * 24 * time.Hour
+	JWTAccessExpire  = 15 * time.Minute
+	Debug            = true
 )
 
 var (

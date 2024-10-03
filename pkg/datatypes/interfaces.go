@@ -3,8 +3,6 @@ package datatypes
 import (
 	"net/http"
 	"time"
-
-	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
 )
 
 type Table interface {
@@ -22,8 +20,8 @@ type Validator interface {
 }
 
 type Response interface {
-	Response(w http.ResponseWriter, status int, code rcodes.ResponseCode, mapData Map)
-	StructResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, data any)
-	ErrorResponse(w http.ResponseWriter, status int, code rcodes.ResponseCode, errs ...error)
+	Response(w http.ResponseWriter, status int, code string, mapData Map)
+	StructResponse(w http.ResponseWriter, status int, code string, data any)
+	ErrorResponse(w http.ResponseWriter, status int, code string, errs ...error)
 	ServerErrorResponse(w http.ResponseWriter, err error)
 }
