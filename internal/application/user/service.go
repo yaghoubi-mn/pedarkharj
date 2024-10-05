@@ -376,7 +376,7 @@ func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP s
 		return responseDTO
 	}
 
-	userErr, serverErr := s.domainService.Login(user.Number, loginInput.Password, user.Password, user.Salt)
+	userErr, serverErr := s.domainService.Login(user.Number, loginInput.Password, user.Password, user.Salt, user.IsBlocked)
 	if serverErr != nil {
 		responseDTO.ServerErr = serverErr
 		return responseDTO

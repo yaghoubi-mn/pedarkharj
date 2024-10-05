@@ -6,6 +6,7 @@ import (
 
 	"github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/config"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/service_errors"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 )
 
@@ -13,7 +14,7 @@ type UserDomainService interface {
 	Signup(user *User, token string) (userError error, serverError error)
 	VerifyNumber(number string, code uint, token string, isBlocked bool) (userError error, serverError error)
 	CheckNumber(number string) error
-	Login(number, inputPassword, realPassword, salt string) (userError, serverError error)
+	Login(number, inputPassword, realPassword, salt string, isBlocked bool) (userError, serverError error)
 }
 
 type DeviceRepository interface {
@@ -34,21 +35,21 @@ func NewUserService(validator datatypes.Validator) UserDomainService {
 func (s *service) VerifyNumber(number string, code uint, token string, isBlocked bool) (error, error) {
 
 	if isBlocked {
-		return errors.New("you are blocked"), nil
+		return service_errors.ErrBlockedUser, nil
 	}
 
 	err := s.validator.ValidateField(number, "e164,required")
 	if err != nil {
-		return errors.New("number: invalid number"), nil
+		return service_errors.ErrInvalidNumber, nil
 	}
 
 	if (code > 99999 || code < 10000) && code != 0 {
-		return errors.New("code: invalid code"), nil
+		return service_errors.ErrInvalidCode, nil
 	}
 
 	err = s.validator.ValidateField(token, "uuid,allowempty")
 	if err != nil {
-		return errors.New("token: invalid token"), nil
+		return service_errors.ErrInvalidToken, nil
 	}
 
 	return nil, nil
@@ -58,16 +59,31 @@ func (s *service) VerifyNumber(number string, code uint, token string, isBlocked
 func (s *service) Signup(user *User, token string) (error, error) {
 	err := s.validator.ValidateField(user.Name, "name,required")
 	if err != nil {
-		return errors.New("name: " + err.Error()), nil
+		return service_errors.ErrInvalidName, nil
 	}
 
 	err = s.validator.ValidateField(user.Number, "e164,required")
 	if err != nil {
-		return errors.New("number: " + err.Error()), nil
+		return service_errors.ErrInvalidNumber, nil
+	}
+
+	err = s.validator.ValidateField(token, "uuid,required")
+	if err != nil {
+		return service_errors.ErrInvalidToken, nil
+	}
+
+	if len(user.Name) > 20 {
+		return service_errors.ErrLongName, nil
+	}
+	if len(user.Name) < 2 {
+		return service_errors.ErrSmallName, nil
 	}
 
 	if len(user.Password) < 8 {
-		return errors.New("password: small password"), nil
+		return service_errors.ErrSmallPassword, nil
+	}
+	if len(user.Password) > 16 {
+		return service_errors.ErrLongPassword, nil
 	}
 
 	user.RegisteredAt = time.Now()
@@ -93,7 +109,11 @@ func (s *service) CheckNumber(number string) error {
 }
 
 // realPassword is hashed (stored password in database)
-func (s *service) Login(number, inputPassword, hashedRealPassword, salt string) (error, error) {
+func (s *service) Login(number, inputPassword, hashedRealPassword, salt string, isBlocked bool) (error, error) {
+
+	if isBlocked {
+		return service_errors.ErrBlockedUser, nil
+	}
 
 	err := utils.CompareHashAndPassword(hashedRealPassword, inputPassword, salt)
 	if err != nil {
