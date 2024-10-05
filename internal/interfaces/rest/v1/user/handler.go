@@ -97,7 +97,7 @@ func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 // @Param password body string true "Password"
 // @Success 200
 // @Failure 500
-// @Failure 400 "BadRequest:<br>code=verify_number_first: User Must be verify number first<br>code=invalid_field: a field is invalid"
+// @Failure 400 "BadRequest:<br>code=verify_number_first: User Must be verify number first<br>code=invalid_field: a field is invalid"<br>code=invalid_token: token is invalid
 // @Router /users/signup [post]
 func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
 	var userInput app_user.SignupUserInput
