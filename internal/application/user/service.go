@@ -15,6 +15,7 @@ import (
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/service_errors"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 )
 
@@ -291,7 +292,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 	if verifyInfo["token"] != userInput.Token {
 
 		responseDTO.ResponseCode = rcodes.InvalidField
-		responseDTO.UserErr = errors.New("token: invalid token")
+		responseDTO.UserErr = service_errors.ErrInvalidToken
 		return responseDTO
 	}
 
@@ -331,6 +332,8 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		responseDTO.ServerErr = err
 		return responseDTO
 	}
+
+	responseDTO.Data = utils.ConvertMapStringStringToMapStringAny(tokens)
 
 	return responseDTO
 }
