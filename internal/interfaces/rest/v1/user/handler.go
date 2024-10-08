@@ -30,12 +30,12 @@ func NewHandler(appService app_user.UserAppService, response datatypes.Response)
 // @Accept json
 // @Produce json
 // @Param number body string true "phone number" example(+98123456789)
-// @Param code body int true "OTP code" example(12345)
+// @Param otp body int true "OTP code" example(12345)
 // @Param token body string true "Token"
 // @Success 200 "Ok. code: code_sent_to_number"
 // @Success 303 "Ok. code: go_signup. verify number done. user must signup"
 // @Failure 500
-// @Failure 400 "BadRequest:<br>code=zero_code_first: Must zero the otp code first.<br>code=wrong_code: The OTP is wrong.<br>code=number_delay: Wait some minutes.<br>code=invalid_field: a field is invalid"
+// @Failure 400 "BadRequest:<br>code=zero_code_first: Must zero the otp code first.<br>code=wrong_otp: The OTP is wrong.<br>code=number_delay: Wait some minutes.<br>code=invalid_field: a field is invalid"
 // @Router /users/verify-number [post]
 func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 	var verifyNumberInput app_user.VerifyNumberInput

@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"encoding/json"
 	"net/http"
 
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
@@ -12,7 +13,7 @@ import (
 
 func NewRouter(userAppService app_user.UserAppService, deviceAppService app_device.DeviceAppService) *http.ServeMux {
 	mux := http.NewServeMux()
-	authMux := http.NewServeMux()
+	// authMux := http.NewServeMux()
 
 	// setup json response
 	jsonResponse := NewJSONResponse()
@@ -24,26 +25,31 @@ func NewRouter(userAppService app_user.UserAppService, deviceAppService app_devi
 	userHandler := user_handler.NewHandler(userAppService, jsonResponse)
 	deviceHandler := device_handler.NewHandler(deviceAppService, jsonResponse)
 
+	// handle 404
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			data := make(map[string]any)
+			data["status"] = 404
+			data["msg"] = "page not found"
+			w.Header().Add("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(data)
+		}
+	})
+
 	// user routes
-	mux.HandleFunc("POST /users/verify-number", userHandler.VerifyNumber)
-	mux.HandleFunc("POST /users/signup", userHandler.SignupUser)
-	mux.HandleFunc("POST /users/check-number", userHandler.CheckNumber)
-	mux.HandleFunc("POST /users/login", userHandler.Login)
-	mux.HandleFunc("POST /users/refresh", userHandler.GetAccessFromRefresh)
-	authMux.HandleFunc("GET /users/info", userHandler.GetUserInfo)
+	registerRouteFunc(mux, "POST", "/users/verify-number", userHandler.VerifyNumber)
+	registerRouteFunc(mux, "POST", "/users/signup", userHandler.SignupUser)
+	registerRouteFunc(mux, "POST", "/users/check-number", userHandler.CheckNumber)
+	registerRouteFunc(mux, "POST", "/users/login", userHandler.Login)
+	registerRouteFunc(mux, "POST", "/users/refresh", userHandler.GetAccessFromRefresh)
+	registerRoute(mux, "GET", "/users/info", authMiddleware.EnsureAuthentication(http.HandlerFunc(userHandler.GetUserInfo)))
 
 	// device routes
-	authMux.HandleFunc("POST /devices/logout", deviceHandler.Logout)
-	authMux.HandleFunc("POST /devices/logout-all", deviceHandler.LogoutAllUserDevices)
-
-	// handle options
-	mux.HandleFunc("OPTIONS /users/verify-number", func(w http.ResponseWriter, r *http.Request) {})
-	mux.HandleFunc("OPTIONS /users/check-number", func(w http.ResponseWriter, r *http.Request) {})
-	mux.HandleFunc("OPTIONS /users/login", func(w http.ResponseWriter, r *http.Request) {})
-	mux.HandleFunc("OPTIONS /users/refresh", func(w http.ResponseWriter, r *http.Request) {})
+	registerRoute(mux, "POST", "/devices/logout", authMiddleware.EnsureAuthentication(http.HandlerFunc((deviceHandler.Logout))))
+	registerRoute(mux, "POST", "/devices/logout-all", authMiddleware.EnsureAuthentication(http.HandlerFunc(deviceHandler.LogoutAllUserDevices)))
 
 	// connect muxes
-	mux.Handle("/", authMiddleware.EnsureAuthentication(authMux))
+	// mux.Handle("/", authMiddleware.EnsureAuthentication(authMux))
 
 	// setup json middleware
 	jsonMiddleware := middleware.NewJsonMiddleware(jsonResponse)
@@ -52,4 +58,25 @@ func NewRouter(userAppService app_user.UserAppService, deviceAppService app_devi
 	m.Handle("/api/v1/", http.StripPrefix("/api/v1", jsonMiddleware.AddCORSHeaders(jsonMiddleware.EnsureApplicationJson(mux))))
 
 	return m
+}
+
+func registerRouteFunc(mux *http.ServeMux, method string, url string, handler func(http.ResponseWriter, *http.Request)) {
+
+	registerRoute(mux, method, url, http.HandlerFunc(handler))
+
+}
+
+// func registerRouteFuncHelper(next http.Handler) http.Handler {
+// 	return
+// }
+
+func registerRoute(mux *http.ServeMux, method string, url string, handle http.Handler) {
+	mux.Handle(method+" "+url, handle)
+
+	mux.HandleFunc("OPTIONS "+url, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, DELETE, PUT")
+		w.Header().Set("Access-Control-Allow-Headers", "content-type, access-control-allow-origin, accept, user-agent, authorization")
+		w.Header().Set("Access-Control-Allow-Max-Age", "86400")
+	})
 }
