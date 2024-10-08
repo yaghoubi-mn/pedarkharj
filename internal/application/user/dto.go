@@ -4,7 +4,7 @@ import domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 
 type VerifyNumberInput struct {
 	Number string `json:"number" validate:"required,e164"`
-	Code   uint   `json:"code"`
+	OTP    uint   `json:"otp"`
 	Token  string `json:"token" validate:"uuid,omitempty"` // temporary token
 }
 

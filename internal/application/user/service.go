@@ -28,10 +28,6 @@ type UserAppService interface {
 	GetAccessFromRefresh(refresh string) (responseDTO datatypes.ResponseDTO)
 }
 
-type deviceRepository interface {
-	CreateWithParam(name string, lastIP string, firstLogin time.Time, lastLogin time.Time, refreshToken string) error
-}
-
 type service struct {
 	repo             domain_user.UserDomainRepository
 	cacheRepo        datatypes.CacheRepository
@@ -55,7 +51,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 
 	// isBlocked will checked in step 2
 
-	userErr, serverErr := s.domainService.VerifyNumber(verifyNumberInput.Number, verifyNumberInput.Code, verifyNumberInput.Token, false)
+	userErr, serverErr := s.domainService.VerifyNumber(verifyNumberInput.Number, verifyNumberInput.OTP, verifyNumberInput.Token, false)
 	if serverErr != nil {
 		responseDTO.ServerErr = serverErr
 		return 0, responseDTO
@@ -66,7 +62,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 		return 0, responseDTO
 	}
 
-	if verifyNumberInput.Code == 0 {
+	if verifyNumberInput.OTP == 0 {
 		// step 1: sent otp code to number
 
 		// check for number delay
@@ -167,7 +163,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 		}
 
 		// check otp
-		if otp == strconv.Itoa(int(verifyNumberInput.Code)) {
+		if otp == strconv.Itoa(int(verifyNumberInput.OTP)) {
 
 			otpInt, err2 := strconv.Atoi(otp)
 			if err2 != nil {
@@ -239,7 +235,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 			return 3, responseDTO
 
 		} else {
-			responseDTO.ResponseCode = rcodes.WrongCode
+			responseDTO.ResponseCode = rcodes.WrongOTP
 			responseDTO.UserErr = errors.New("code: wrong code")
 			return 0, responseDTO
 		}
@@ -377,8 +373,19 @@ func (s *service) CheckNumber(numberInput NumberInput) (responseDTO datatypes.Re
 func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
+	if err := s.domainService.CheckNumber(loginInput.Number); err != nil {
+		responseDTO.UserErr = err
+		return
+	}
+
 	user, err := s.repo.GetByNumber(loginInput.Number)
 	if err != nil {
+		if err == database_errors.ErrRecordNotFound {
+			responseDTO.ResponseCode = rcodes.NumberNotExist
+			responseDTO.Data["msg"] = "number not exist."
+			responseDTO.UserErr = errors.New("number: number not exist")
+			return
+		}
 		responseDTO.ServerErr = err
 		return responseDTO
 	}
