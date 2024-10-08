@@ -3,12 +3,14 @@ package v1
 import (
 	"net/http"
 
+	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
+	device_handler "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/device"
 	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/middleware"
 	user_handler "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/user"
 )
 
-func NewRouter(userAppService app_user.UserAppService) *http.ServeMux {
+func NewRouter(userAppService app_user.UserAppService, deviceAppService app_device.DeviceAppService) *http.ServeMux {
 	mux := http.NewServeMux()
 	authMux := http.NewServeMux()
 
@@ -20,6 +22,7 @@ func NewRouter(userAppService app_user.UserAppService) *http.ServeMux {
 
 	// handlers
 	userHandler := user_handler.NewHandler(userAppService, jsonResponse)
+	deviceHandler := device_handler.NewHandler(deviceAppService, jsonResponse)
 
 	// user routes
 	mux.HandleFunc("POST /users/verify-number", userHandler.VerifyNumber)
@@ -28,6 +31,10 @@ func NewRouter(userAppService app_user.UserAppService) *http.ServeMux {
 	mux.HandleFunc("POST /users/login", userHandler.Login)
 	mux.HandleFunc("POST /users/refresh", userHandler.GetAccessFromRefresh)
 	authMux.HandleFunc("GET /users/info", userHandler.GetUserInfo)
+
+	// device routes
+	authMux.HandleFunc("POST /devices/logout", deviceHandler.Logout)
+	authMux.HandleFunc("POST /devices/logout-all", deviceHandler.LogoutAllUserDevices)
 
 	// handle options
 	mux.HandleFunc("OPTIONS /users/verify-number", func(w http.ResponseWriter, r *http.Request) {})

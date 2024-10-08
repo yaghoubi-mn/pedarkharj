@@ -15,6 +15,87 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/devices/logout": {
+            "post": {
+                "description": "logout current user device",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "devices"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/devices/logout-all": {
+            "post": {
+                "description": "logout all user devices",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "devices"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/users/check-number": {
+            "post": {
+                "description": "Check number is exist",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "parameters": [
+                    {
+                        "example": "+98123456789",
+                        "description": "phone number",
+                        "name": "number",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "BadRequest:\u003cbr\u003ecode=invalid_field"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/users/info": {
             "get": {
                 "description": "get user info",
@@ -76,6 +157,42 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "BadRequest:\u003cbr\u003ecode=invalid_field: a field is invalid"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/users/refresh": {
+            "post": {
+                "description": "Get access token with refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "parameters": [
+                    {
+                        "description": "refresh",
+                        "name": "refresh",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "BadRequest:\u003cbr\u003ecode=invalid_field"
                     },
                     "500": {
                         "description": "Internal Server Error"
@@ -150,7 +267,7 @@ const docTemplate = `{
         },
         "/users/verify-number": {
             "post": {
-                "description": "Get access token with refresh token",
+                "description": "verify number with sms",
                 "consumes": [
                     "application/json"
                 ],
@@ -162,8 +279,28 @@ const docTemplate = `{
                 ],
                 "parameters": [
                     {
-                        "description": "refresh",
-                        "name": "refresh",
+                        "example": "+98123456789",
+                        "description": "phone number",
+                        "name": "number",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "example": 12345,
+                        "description": "OTP code",
+                        "name": "code",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Token",
+                        "name": "token",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -173,10 +310,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "Ok. code: code_sent_to_number"
+                    },
+                    "303": {
+                        "description": "Ok. code: go_signup. verify number done. user must signup"
                     },
                     "400": {
-                        "description": "BadRequest:\u003cbr\u003ecode=invalid_field"
+                        "description": "BadRequest:\u003cbr\u003ecode=zero_code_first: Must zero the otp code first.\u003cbr\u003ecode=wrong_code: The OTP is wrong.\u003cbr\u003ecode=number_delay: Wait some minutes.\u003cbr\u003ecode=invalid_field: a field is invalid"
                     },
                     "500": {
                         "description": "Internal Server Error"

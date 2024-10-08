@@ -67,3 +67,14 @@ func (j *jsonResponse) ServerErrorResponse(w http.ResponseWriter, err error) {
 	slog.Error("SERVER ERROR", "error", err.Error())
 	j.Response(w, http.StatusInternalServerError, "", datatypes.Map{"msg": "Server error"})
 }
+
+// check ServerErr and UserErr
+func (j *jsonResponse) DTOResponse(w http.ResponseWriter, responseDTO datatypes.ResponseDTO) {
+
+	if responseDTO.ServerErr != nil {
+		j.ServerErrorResponse(w, responseDTO.ServerErr)
+	} else if responseDTO.UserErr != nil {
+		j.ErrorResponse(w, 400, responseDTO.ResponseCode, responseDTO.UserErr)
+	}
+
+}

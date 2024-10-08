@@ -10,6 +10,8 @@ import (
 type DeviceDomainService interface {
 	Create(device *Device) error
 	CreateOrUpdate(device *Device) error
+	Logout(userID uint64, deviceName string) error
+	LogoutAllUserDevices(userID uint64) error
 }
 
 type service struct {
@@ -50,7 +52,7 @@ func (s *service) Create(device *Device) error {
 }
 
 func (s *service) CreateOrUpdate(device *Device) error {
-	err := s.validator.ValidateField(device.Name, "name,size:300,required")
+	err := s.validator.ValidateField(device.Name, "useragent,size:300,required")
 	if err != nil {
 		return errors.New("name: " + err.Error())
 	}
@@ -73,4 +75,26 @@ func (s *service) CreateOrUpdate(device *Device) error {
 	}
 
 	return err
+}
+
+func (s *service) Logout(userID uint64, deviceName string) error {
+	err := s.validator.ValidateField(deviceName, "useragent")
+	if err != nil {
+		return err
+	}
+
+	if userID == 0 {
+		return errors.New("invalid userID")
+	}
+
+	return nil
+}
+
+func (s *service) LogoutAllUserDevices(userID uint64) error {
+
+	if userID == 0 {
+		return errors.New("ivnalid userID")
+	}
+
+	return nil
 }

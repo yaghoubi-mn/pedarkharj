@@ -80,7 +80,7 @@ func setupRouter(db *gorm.DB, validatorIns datatypes.Validator, cacheRepo dataty
 	userAppService := app_user.NewUserService(userRepo, cacheRepo, deviceAppService, userDomainService)
 
 	// setup router
-	muxV1 := interfaces_rest_v1.NewRouter(userAppService)
+	muxV1 := interfaces_rest_v1.NewRouter(userAppService, deviceAppService)
 
 	return muxV1
 }

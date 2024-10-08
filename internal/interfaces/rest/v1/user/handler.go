@@ -194,7 +194,7 @@ func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 // @Success 200
 // @Failure 500
 // @Failure 400 "BadRequest:<br>code=invalid_field"
-// @Router /users/verify-number [post]
+// @Router /users/check-number [post]
 func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
 
 	var numberInput app_user.NumberInput
@@ -224,7 +224,7 @@ func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
 // @Success 200
 // @Failure 500
 // @Failure 400 "BadRequest:<br>code=invalid_field"
-// @Router /users/verify-number [post]
+// @Router /users/refresh [post]
 func (h *Handler) GetAccessFromRefresh(w http.ResponseWriter, r *http.Request) {
 
 	var refreshInput app_user.RefreshInput

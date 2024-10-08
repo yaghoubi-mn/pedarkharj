@@ -72,8 +72,18 @@ func (repo *GormDeviceRepository) CreateOrUpdate(device domain_device.Device) er
 
 func (repo *GormDeviceRepository) GetUserByRefreshToken(refresh string) (user domain_user.User, err error) {
 
-	var device domain_device.Device
-	if err = repo.DB.Preload("User").Where(domain_device.Device{RefreshToken: refresh}).Find(&device).Error; err != nil {
+	// // TODO: fix preload
+	// var device domain_device.Device
+	// if err = repo.DB.Preload("User").Where(domain_device.Device{RefreshToken: refresh}).Find(&device).Error; err != nil {
+	// 	if err == gorm.ErrRecordNotFound {
+	// 		return user, database_errors.ErrRecordNotFound
+	// 	}
+
+	// 	return user, err
+	// }
+
+	var userID uint64
+	if err = repo.DB.Model(&domain_device.Device{}).Select("user_id").Where(domain_device.Device{RefreshToken: refresh}).Find(&userID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return user, database_errors.ErrRecordNotFound
 		}
@@ -81,5 +91,27 @@ func (repo *GormDeviceRepository) GetUserByRefreshToken(refresh string) (user do
 		return user, err
 	}
 
-	return device.User, nil
+	if err = repo.DB.First(&user, &domain_user.User{ID: userID}).Error; err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (repo *GormDeviceRepository) Logout(userID uint64, deviceName string) error {
+
+	if err := repo.DB.Model(&domain_device.Device{}).Where(domain_device.Device{UserID: userID, Name: deviceName}).Update("refresh_token", "").Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repo *GormDeviceRepository) LogoutAllUserDevices(userID uint64) error {
+
+	if err := repo.DB.Model(&domain_device.Device{}).Where(domain_device.Device{UserID: userID}).Update("refresh_token", "").Error; err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -5,12 +5,15 @@ import (
 
 	domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 )
 
 type DeviceAppService interface {
 	CreateOrUpdate(deviceInput DeviceInput) error
 	GetDeviceUserByRefreshToken(refresh string) (user domain_user.User, userErr error, serverErr error)
+	Logout(userID uint64, deviceName string) datatypes.ResponseDTO
+	LogoutAllUserDevices(userID uint64) datatypes.ResponseDTO
 }
 
 type service struct {
@@ -51,4 +54,34 @@ func (s *service) GetDeviceUserByRefreshToken(refresh string) (user domain_user.
 	user, err = s.repo.GetUserByRefreshToken(refresh)
 	return user, nil, err
 
+}
+
+func (s *service) Logout(userID uint64, deviceName string) (responseDTO datatypes.ResponseDTO) {
+	responseDTO.Data = make(map[string]any)
+
+	err := s.domainService.Logout(userID, deviceName)
+	if err != nil {
+		responseDTO.ServerErr = err
+		return
+	}
+
+	err = s.repo.Logout(userID, deviceName)
+	responseDTO.ServerErr = err
+
+	return
+
+}
+
+func (s *service) LogoutAllUserDevices(userID uint64) (responseDTO datatypes.ResponseDTO) {
+	responseDTO.Data = make(map[string]any)
+
+	err := s.domainService.LogoutAllUserDevices(userID)
+	if err != nil {
+		responseDTO.ServerErr = err
+		return
+	}
+
+	err = s.repo.LogoutAllUserDevices(userID)
+	responseDTO.ServerErr = err
+	return
 }

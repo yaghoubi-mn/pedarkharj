@@ -6,6 +6,58 @@ info:
   title: Pedarkharj
   version: 1.0.0
 paths:
+  /devices/logout:
+    post:
+      consumes:
+      - application/json
+      description: logout current user device
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      tags:
+      - devices
+  /devices/logout-all:
+    post:
+      consumes:
+      - application/json
+      description: logout all user devices
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      tags:
+      - devices
+  /users/check-number:
+    post:
+      consumes:
+      - application/json
+      description: Check number is exist
+      parameters:
+      - description: phone number
+        example: "+98123456789"
+        in: body
+        name: number
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: BadRequest:<br>code=invalid_field
+        "500":
+          description: Internal Server Error
+      tags:
+      - users
   /users/info:
     get:
       consumes:
@@ -46,6 +98,29 @@ paths:
           description: OK
         "400":
           description: 'BadRequest:<br>code=invalid_field: a field is invalid'
+        "500":
+          description: Internal Server Error
+      tags:
+      - users
+  /users/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get access token with refresh token
+      parameters:
+      - description: refresh
+        in: body
+        name: refresh
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: BadRequest:<br>code=invalid_field
         "500":
           description: Internal Server Error
       tags:
@@ -98,11 +173,25 @@ paths:
     post:
       consumes:
       - application/json
-      description: Get access token with refresh token
+      description: verify number with sms
       parameters:
-      - description: refresh
+      - description: phone number
+        example: "+98123456789"
         in: body
-        name: refresh
+        name: number
+        required: true
+        schema:
+          type: string
+      - description: OTP code
+        example: 12345
+        in: body
+        name: code
+        required: true
+        schema:
+          type: integer
+      - description: Token
+        in: body
+        name: token
         required: true
         schema:
           type: string
@@ -110,9 +199,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 'Ok. code: code_sent_to_number'
+        "303":
+          description: 'Ok. code: go_signup. verify number done. user must signup'
         "400":
-          description: BadRequest:<br>code=invalid_field
+          description: 'BadRequest:<br>code=zero_code_first: Must zero the otp code
+            first.<br>code=wrong_code: The OTP is wrong.<br>code=number_delay: Wait
+            some minutes.<br>code=invalid_field: a field is invalid'
         "500":
           description: Internal Server Error
       tags:

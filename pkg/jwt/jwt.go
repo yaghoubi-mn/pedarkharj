@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -67,13 +68,7 @@ func CreateRefreshAndAccessFromUser(refreshExpireTime time.Duration, accessExpir
 		return "", "", err
 	}
 
-	access, err = CreateJwt(map[string]any{
-		"exp":          time.Now().Add(accessExpireTime).Unix(),
-		"id":           id,
-		"name":         name,
-		"number":       number,
-		"isRegistered": isRegistered,
-	})
+	access, err = CreateAccessFromUser(accessExpireTime, id, name, number, isRegistered)
 
 	return refresh, access, err
 
@@ -81,6 +76,10 @@ func CreateRefreshAndAccessFromUser(refreshExpireTime time.Duration, accessExpir
 
 func CreateAccessFromUser(accessExpireTime time.Duration, id uint64, name string, number string, isRegistered bool) (access string, err error) {
 
+	if id == 0 {
+		return "", errors.New("cannot create jwt: id is zero")
+	}
+	fmt.Println(id, "----------------")
 	access, err = CreateJwt(map[string]any{
 		"exp":          time.Now().Add(accessExpireTime).Unix(),
 		"id":           id,
@@ -99,7 +98,7 @@ func GetUserFromAccess(access string) (id uint64, name string, number string, is
 	if err != nil {
 		return 0, "", "", false, err
 	}
-
+	fmt.Println(mapClaims, "====================")
 	id = uint64(mapClaims["id"].(float64))
 	name = mapClaims["name"].(string)
 	number = mapClaims["number"].(string)

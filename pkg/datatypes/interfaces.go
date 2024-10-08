@@ -24,4 +24,5 @@ type Response interface {
 	StructResponse(w http.ResponseWriter, status int, code string, data any)
 	ErrorResponse(w http.ResponseWriter, status int, code string, errs ...error)
 	ServerErrorResponse(w http.ResponseWriter, err error)
+	DTOResponse(w http.ResponseWriter, responseDTO ResponseDTO)
 }

@@ -12,8 +12,9 @@ import (
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 )
 
-const (
-	INVALID_NAME_CHARS = "*/!@#$%^&*()_+-={}[];:'\"?><.,|\\"
+var (
+	INVALID_NAME_CHARS      = []string{"*", "/", "!", "@", "#", "$%", "^", "&", "*", "(", ")", "_", "+", "-", "=", "{", "}", "[", "]", ";", ":", "'", "\\", "?", "\"", ".", ">", "<", "|", "union"}
+	INVALID_USERAGENT_CHARS = []string{"\\", "union", "<", "'"}
 )
 
 type validate struct {
@@ -23,8 +24,26 @@ type validate struct {
 func NewValidator() datatypes.Validator {
 	vald := validator_lib.New()
 
-	vald.RegisterValidation("name", func(fl validator_lib.FieldLevel) bool { return true })
+	vald.RegisterValidation("name", func(fl validator_lib.FieldLevel) bool {
+		for _, char := range INVALID_NAME_CHARS {
+			if strings.Contains(fmt.Sprintf("%v", fl.Field()), char) {
+				return false
+			}
+		}
+
+		return true
+
+	})
 	vald.RegisterValidation("allowempty", func(fl validator_lib.FieldLevel) bool { return true })
+	vald.RegisterValidation("useragent", func(fl validator_lib.FieldLevel) bool {
+		for _, char := range INVALID_USERAGENT_CHARS {
+			if strings.Contains(fmt.Sprintf("%v", fl.Field()), char) {
+				return false
+			}
+		}
+
+		return true
+	})
 
 	for i := 0; i < 1000; i += 5 {
 
@@ -58,28 +77,34 @@ func (v *validate) Struct(st interface{}) (fieldName string, err error) {
 
 func (v *validate) ValidateField(fieldValue any, tag string) error {
 	err := v.validator.Var(fieldValue, tag)
-
+	fmt.Println("value", fieldValue, "tag", tag)
 	if strings.Contains(tag, "allowempty") {
 		if fieldValue == "" {
 			return nil
 		}
 
-	} else if strings.Contains(tag, "e164") {
-		if err != nil {
-			return errors.New("invalid phone number")
-		}
-	} else if strings.Contains(tag, "name") {
+		// } else if strings.Contains(tag, "e164") {
+		// 	if err != nil {
+		// 		return errors.New("invalid phone number")
+		// 	}
+		// } else if strings.Contains(tag, "name") {
 
-		for char := range INVALID_NAME_CHARS {
-			if strings.Contains(fieldValue.(string), string(char)) {
-				return errors.New("invalid character: " + string(char))
-			}
+		// 	for char := range INVALID_NAME_CHARS {
+		// 		if strings.Contains(fieldValue.(string), string(char)) {
+		// 			return errors.New("invalid character: " + string(char))
+		// 		}
+		// 	}
+	} else if strings.Contains(tag, "required") {
+		if fieldValue == "" {
+			return errors.New("this field is requried")
 		}
-	} else {
-		if err != nil {
-			return errors.New("invalid field")
-		}
+
 	}
 
-	return nil
+	if err != nil {
+		return errors.New("invalid field")
+	} else {
+		return nil
+	}
+
 }

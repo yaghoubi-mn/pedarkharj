@@ -12,7 +12,7 @@ type Device struct {
 	LastIP       string    `gorm:"size:15,not null"`
 	FirstLogin   time.Time `gorm:"not null"`
 	LastLogin    time.Time `gorm:"not null"`
-	RefreshToken string    `gorm:"size:200"`
+	RefreshToken string    `gorm:"size:200,unique"`
 	UserID       uint64    `gorm:"index,not null"`
 	User         domain_user.User
 }
