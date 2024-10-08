@@ -140,7 +140,7 @@ paths:
         required: true
         schema:
           type: string
-      - description: OTP code
+      - description: full name
         example: test
         in: body
         name: name

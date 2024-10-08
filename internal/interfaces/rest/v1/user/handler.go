@@ -92,7 +92,7 @@ func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param number body string true "phone number" example(+98123456789)
-// @Param name body string true "OTP code" example(test)
+// @Param name body string true "full name" example(test)
 // @Param token body string true "Token"
 // @Param password body string true "Password"
 // @Success 200

@@ -46,12 +46,22 @@ func main() {
 
 	// setup database
 	db := SetupGrom()
-	if len(os.Args) > 1 && os.Args[1] == "migrate" {
-		return
-	}
-
 	// setup cache
 	cacheRepo := cache.New(db)
+
+	// migrate
+	if len(os.Args) > 1 && os.Args[1] == "migrate" {
+		slog.Info("migration tables")
+		err := MigrateTables(db)
+		if err != nil {
+			slog.Warn("Cannot migrate tables", "error", err.Error())
+		}
+		err = cache.MigrateTables(db)
+		if err != nil {
+			slog.Warn("Cannot migrate tables", "error", err.Error())
+		}
+		return
+	}
 
 	// setup validator
 	validatorIns := validator.NewValidator()
@@ -107,16 +117,14 @@ func SetupGrom() *gorm.DB {
 		os.Exit(1)
 	}
 
-	if len(os.Args) > 1 && os.Args[1] == "migrate" {
-		slog.Info("migration tables")
-		err = db.AutoMigrate(
-			&domain_user.User{},
-			&domain_device.Device{},
-		)
-		if err != nil {
-			slog.Warn("Cannot migrate tables", "error", err.Error())
-		}
-	}
-
 	return db
+}
+
+func MigrateTables(db *gorm.DB) error {
+
+	return db.AutoMigrate(
+		&domain_user.User{},
+		&domain_device.Device{},
+	)
+
 }

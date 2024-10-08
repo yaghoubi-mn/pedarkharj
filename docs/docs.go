@@ -228,7 +228,7 @@ const docTemplate = `{
                     },
                     {
                         "example": "test",
-                        "description": "OTP code",
+                        "description": "full name",
                         "name": "name",
                         "in": "body",
                         "required": true,

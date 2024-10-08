@@ -72,7 +72,7 @@ func (s *service) Signup(user *User, token string) (error, error) {
 		return service_errors.ErrInvalidToken, nil
 	}
 
-	if len(user.Name) > 20 {
+	if len(user.Name) > 30 {
 		return service_errors.ErrLongName, nil
 	}
 	if len(user.Name) < 2 {

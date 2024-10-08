@@ -22,11 +22,13 @@ type GormCacheRepository struct {
 
 func New(db *gorm.DB) datatypes.CacheRepository {
 
-	db.AutoMigrate(&CacheTable{})
-
 	return GormCacheRepository{
 		DB: db,
 	}
+}
+
+func MigrateTables(db *gorm.DB) error {
+	return db.AutoMigrate(&CacheTable{})
 }
 
 func (g GormCacheRepository) Save(key string, value string, expireTime time.Duration) error {
