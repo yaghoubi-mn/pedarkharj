@@ -22,6 +22,7 @@ import (
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	gorm_logger "gorm.io/gorm/logger"
 )
 
 // @title Pedarkharj
@@ -45,6 +46,9 @@ func main() {
 
 	// setup database
 	db := SetupGrom()
+	if len(os.Args) > 1 && os.Args[1] == "migrate" {
+		return
+	}
 
 	// setup cache
 	cacheRepo := cache.New(db)
@@ -95,18 +99,23 @@ func setupRouter(db *gorm.DB, validatorIns datatypes.Validator, cacheRepo dataty
 func SetupGrom() *gorm.DB {
 	// connet to database
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Tehran", os.Getenv("DB_HOST"), os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("DB_PORT"))
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: gorm_logger.Default.LogMode(gorm_logger.Info),
+	})
 	if err != nil {
 		slog.Error("Cannot connect to database", "error", err.Error())
 		os.Exit(1)
 	}
 
-	err = db.AutoMigrate(
-		&domain_user.User{},
-		&domain_device.Device{},
-	)
-	if err != nil {
-		slog.Warn("Cannot migrate tables", "error", err.Error())
+	if len(os.Args) > 1 && os.Args[1] == "migrate" {
+		slog.Info("migration tables")
+		err = db.AutoMigrate(
+			&domain_user.User{},
+			&domain_device.Device{},
+		)
+		if err != nil {
+			slog.Warn("Cannot migrate tables", "error", err.Error())
+		}
 	}
 
 	return db

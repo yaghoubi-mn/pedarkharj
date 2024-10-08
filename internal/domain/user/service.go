@@ -105,7 +105,11 @@ func (s *service) Signup(user *User, token string) (error, error) {
 func (s *service) CheckNumber(number string) error {
 
 	err := s.validator.ValidateField(number, "e164,required")
-	return err
+	if err != nil {
+		return service_errors.ErrInvalidNumber
+	}
+
+	return nil
 }
 
 // realPassword is hashed (stored password in database)

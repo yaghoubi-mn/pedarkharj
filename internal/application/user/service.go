@@ -208,7 +208,6 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 			}
 
 			// call domain service
-			fmt.Println(user.Number, "------------number")
 			userErr, serverErr = s.domainService.VerifyNumber(user.Number, uint(otpInt), token, user.IsBlocked)
 			responseDTO.ServerErr = serverErr
 			responseDTO.UserErr = userErr
@@ -305,7 +304,12 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 	}
 
 	// delete cache
-	if err := s.cacheRepo.Delete(userInput.Number + userInput.Token); err != nil {
+	if err := s.cacheRepo.Delete(userInput.Number); err != nil {
+		responseDTO.ServerErr = err
+		return responseDTO
+	}
+	err = s.repo.Create(&user)
+	if err != nil {
 		responseDTO.ServerErr = err
 		return responseDTO
 	}
@@ -328,8 +332,6 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		return responseDTO
 	}
 
-	err = s.repo.Create(user)
-	responseDTO.ServerErr = err
 	return responseDTO
 }
 
@@ -348,7 +350,8 @@ func (s *service) CheckNumber(numberInput NumberInput) (responseDTO datatypes.Re
 
 	err := s.domainService.CheckNumber(numberInput.Number)
 	if err != nil {
-		responseDTO.ServerErr = err
+		responseDTO.UserErr = err
+		responseDTO.ResponseCode = rcodes.InvalidField
 		return responseDTO
 	}
 
