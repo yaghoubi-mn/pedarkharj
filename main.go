@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/swaggo/http-swagger/v2"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	_ "github.com/yaghoubi-mn/pedarkharj/docs"
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
@@ -61,8 +61,15 @@ func main() {
 
 	mux := setupRouter(db, validatorIns, cacheRepo)
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
-	slog.Info("listening at http://127.0.0.1:1111")
-	slog.Error(http.ListenAndServe(":1111", mux).Error())
+	fmt.Println(os.Args)
+	if len(os.Args) > 1 && os.Args[1] == "debug" {
+		slog.Info("listening at http://127.0.0.1:2222")
+		slog.Error(http.ListenAndServe(":2222", mux).Error())
+	} else {
+		slog.Info("listening at http://127.0.0.1:1111")
+		slog.Error(http.ListenAndServe(":1111", mux).Error())
+
+	}
 }
 
 func setupRouter(db *gorm.DB, validatorIns datatypes.Validator, cacheRepo datatypes.CacheRepository) *http.ServeMux {

@@ -77,7 +77,8 @@ func (v *validate) Struct(st interface{}) (fieldName string, err error) {
 
 func (v *validate) ValidateField(fieldValue any, tag string) error {
 	err := v.validator.Var(fieldValue, tag)
-	fmt.Println("value", fieldValue, "tag", tag)
+	// fmt.Println("----------", fieldValue, tag, fieldValue == "")
+	// fmt.Println("value", fieldValue, "tag", tag)
 	if strings.Contains(tag, "allowempty") {
 		if fieldValue == "" {
 			return nil

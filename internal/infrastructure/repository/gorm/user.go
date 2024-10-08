@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/database_errors"
 	"gorm.io/gorm"
@@ -34,9 +36,9 @@ func (repo *GormUserRepository) GetByNumber(number string) (domain_user.User, er
 			return u, database_errors.ErrRecordNotFound
 		}
 
+		fmt.Printf("%+v---------------\n", u)
 		return u, err
 	}
-
 	return u, nil
 }
 

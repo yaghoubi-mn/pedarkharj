@@ -167,25 +167,18 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 
 		// check otp
 		if otp == strconv.Itoa(int(verifyNumberInput.Code)) {
-			// get user
-			user, err := s.repo.GetByNumber(verifyNumberInput.Number)
 
 			otpInt, err2 := strconv.Atoi(otp)
 			if err2 != nil {
-				responseDTO.ServerErr = err
+				responseDTO.ServerErr = err2
 				return 0, responseDTO
 			}
 
-			// call domain service
-			userErr, serverErr = s.domainService.VerifyNumber(user.Number, uint(otpInt), token, user.IsBlocked)
-			responseDTO.ServerErr = serverErr
-			responseDTO.UserErr = userErr
-			if serverErr != nil || userErr != nil {
-				return 0, responseDTO
-			}
+			// get user
+			user, databaseErr := s.repo.GetByNumber(verifyNumberInput.Number)
 
-			if err != nil {
-				if err == database_errors.ErrRecordNotFound {
+			if databaseErr != nil {
+				if databaseErr == database_errors.ErrRecordNotFound {
 
 					// user not exist. redirect to signup
 
@@ -214,6 +207,14 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 				return 0, responseDTO
 			}
 
+			// call domain service
+			fmt.Println(user.Number, "------------number")
+			userErr, serverErr = s.domainService.VerifyNumber(user.Number, uint(otpInt), token, user.IsBlocked)
+			responseDTO.ServerErr = serverErr
+			responseDTO.UserErr = userErr
+			if serverErr != nil || userErr != nil {
+				return 0, responseDTO
+			}
 			// user found in database
 			tokens, err := jwt.CreateRefreshAndAccessFromUserWithMap(config.JWtRefreshExpire, config.JWTAccessExpire, user.ID, user.Name, user.Number, user.IsRegistered)
 			if err != nil {
