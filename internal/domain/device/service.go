@@ -25,18 +25,15 @@ func NewDeviceService(validator datatypes.Validator) DeviceDomainService {
 }
 
 func (s *service) Create(device *Device) error {
-	err := s.validator.ValidateField(device.Name, "useragent,size:300,required")
-	if err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Name", device.Name, Device{}); err != nil {
 		return errors.New("name: " + err.Error())
 	}
 
-	err = s.validator.ValidateField(device.LastIP, "size:15,required")
-	if err != nil {
+	if err := s.validator.ValidateFieldByFieldName("LastIP", device.LastIP, Device{}); err != nil {
 		return errors.New("lastIP: " + err.Error())
 	}
 
-	err = s.validator.ValidateField(device.RefreshToken, "size:200,required")
-	if err != nil {
+	if err := s.validator.ValidateFieldByFieldName("RefreshToken", device.RefreshToken, Device{}); err != nil {
 		return errors.New("refresh: invalid refresh token: " + err.Error())
 	}
 
@@ -47,23 +44,20 @@ func (s *service) Create(device *Device) error {
 	device.LastLogin = time.Now()
 	device.FirstLogin = time.Now()
 
-	return err
+	return nil
 
 }
 
 func (s *service) CreateOrUpdate(device *Device) error {
-	err := s.validator.ValidateField(device.Name, "useragent,size:300,required")
-	if err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Name", device.Name, Device{}); err != nil {
 		return errors.New("name: " + err.Error())
 	}
 
-	err = s.validator.ValidateField(device.LastIP, "size:15,required")
-	if err != nil {
+	if err := s.validator.ValidateFieldByFieldName("LastIP", device.LastIP, Device{}); err != nil {
 		return errors.New("lastIP: " + err.Error())
 	}
 
-	err = s.validator.ValidateField(device.RefreshToken, "size:200,required")
-	if err != nil {
+	if err := s.validator.ValidateFieldByFieldName("RefreshToken", device.RefreshToken, Device{}); err != nil {
 		return errors.New("refresh: invalid refresh token: " + err.Error())
 	}
 
@@ -74,12 +68,11 @@ func (s *service) CreateOrUpdate(device *Device) error {
 		device.FirstLogin = time.Now()
 	}
 
-	return err
+	return nil
 }
 
 func (s *service) Logout(userID uint64, deviceName string) error {
-	err := s.validator.ValidateField(deviceName, "useragent")
-	if err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Name", deviceName, Device{}); err != nil {
 		return err
 	}
 

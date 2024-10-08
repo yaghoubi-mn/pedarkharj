@@ -1,7 +1,6 @@
 package domain_user
 
 import (
-	"errors"
 	"time"
 
 	"github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/config"
@@ -38,8 +37,7 @@ func (s *service) VerifyNumber(number string, code uint, token string, isBlocked
 		return service_errors.ErrBlockedUser, nil
 	}
 
-	err := s.validator.ValidateField(number, "e164,required")
-	if err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Number", number, User{}); err != nil {
 		return service_errors.ErrInvalidNumber, nil
 	}
 
@@ -47,8 +45,7 @@ func (s *service) VerifyNumber(number string, code uint, token string, isBlocked
 		return service_errors.ErrInvalidCode, nil
 	}
 
-	err = s.validator.ValidateField(token, "uuid,allowempty")
-	if err != nil {
+	if err := s.validator.ValidateField(token, "uuid,allowempty"); err != nil {
 		return service_errors.ErrInvalidToken, nil
 	}
 
@@ -57,24 +54,18 @@ func (s *service) VerifyNumber(number string, code uint, token string, isBlocked
 }
 
 func (s *service) Signup(user *User, token string) (error, error) {
-	err := s.validator.ValidateField(user.Name, "name,required")
-	if err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Name", user.Name, User{}); err != nil {
 		return service_errors.ErrInvalidName, nil
 	}
 
-	err = s.validator.ValidateField(user.Number, "e164,required")
-	if err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Number", user.Number, User{}); err != nil {
 		return service_errors.ErrInvalidNumber, nil
 	}
 
-	err = s.validator.ValidateField(token, "uuid,required")
-	if err != nil {
+	if err := s.validator.ValidateField(token, "uuid,required"); err != nil {
 		return service_errors.ErrInvalidToken, nil
 	}
 
-	if len(user.Name) > 30 {
-		return service_errors.ErrLongName, nil
-	}
 	if len(user.Name) < 2 {
 		return service_errors.ErrSmallName, nil
 	}
@@ -82,13 +73,11 @@ func (s *service) Signup(user *User, token string) (error, error) {
 	if len(user.Password) < 8 {
 		return service_errors.ErrSmallPassword, nil
 	}
-	if len(user.Password) > 16 {
-		return service_errors.ErrLongPassword, nil
-	}
 
 	user.RegisteredAt = time.Now()
 	user.IsRegistered = true
 
+	var err error
 	user.Salt, err = utils.GenerateRandomSalt()
 	if err != nil {
 		return nil, err
@@ -104,8 +93,7 @@ func (s *service) Signup(user *User, token string) (error, error) {
 
 func (s *service) CheckNumber(number string) error {
 
-	err := s.validator.ValidateField(number, "e164,required")
-	if err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Number", number, User{}); err != nil {
 		return service_errors.ErrInvalidNumber
 	}
 
@@ -119,14 +107,12 @@ func (s *service) Login(number, inputPassword, hashedRealPassword, salt string, 
 		return service_errors.ErrBlockedUser, nil
 	}
 
-	err := utils.CompareHashAndPassword(hashedRealPassword, inputPassword, salt)
-	if err != nil {
-		return errors.New("invalid number or password"), nil
+	if err := utils.CompareHashAndPassword(hashedRealPassword, inputPassword, salt); err != nil {
+		return service_errors.ErrWrongPassword, nil
 	}
 
-	err = s.validator.ValidateField(number, "e164,required")
-	if err != nil {
-		return errors.New("number: invalid number"), nil
+	if err := s.validator.ValidateFieldByFieldName("Number", number, User{}); err != nil {
+		return service_errors.ErrInvalidNumber, nil
 	}
 
 	return nil, nil

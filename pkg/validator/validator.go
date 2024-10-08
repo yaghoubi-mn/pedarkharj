@@ -75,6 +75,21 @@ func (v *validate) Struct(st interface{}) (fieldName string, err error) {
 	return "", nil
 }
 
+func (v *validate) ValidateFieldByFieldName(fieldName string, fieldValue any, model any) error {
+	sf, ok := reflect.TypeOf(model).FieldByName(fieldName)
+	if !ok {
+		panic("cannot find fieldByName:" + fieldName)
+	}
+
+	validateTag, ok := sf.Tag.Lookup("validate")
+	if !ok {
+		// no validation setted.
+		return nil
+	}
+
+	return v.ValidateField(fieldValue, validateTag)
+}
+
 func (v *validate) ValidateField(fieldValue any, tag string) error {
 	err := v.validator.Var(fieldValue, tag)
 	// fmt.Println("----------", fieldValue, tag, fieldValue == "")
