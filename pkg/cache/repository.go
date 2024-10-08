@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"log/slog"
 	"time"
 
 	"github.com/yaghoubi-mn/pedarkharj/pkg/database_errors"
@@ -47,7 +48,15 @@ func (g GormCacheRepository) Save(key string, value string, expireTime time.Dura
 		return err
 	}
 
+	go g.DeleteExpiredRecords()
+
 	return nil
+}
+
+func (g GormCacheRepository) DeleteExpiredRecords() {
+	if err := g.DB.Where("expire < ?", time.Now()).Delete(&CacheTable{}).Error; err != nil {
+		slog.Error("cannot delete expired records", "error", err)
+	}
 }
 
 func (g GormCacheRepository) Get(key string) (string, error) {

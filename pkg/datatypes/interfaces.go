@@ -17,6 +17,7 @@ type CacheRepository interface {
 
 type Validator interface {
 	ValidateField(v any, tag string) error
+	ValidateFieldByFieldName(fieldName string, fieldValue any, model any) error
 }
 
 type Response interface {

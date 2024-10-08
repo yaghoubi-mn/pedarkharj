@@ -1,6 +1,9 @@
 package utils
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
 
 // returns "" if ip not found
 func GetIPAddress(r *http.Request) string {
@@ -11,6 +14,14 @@ func GetIPAddress(r *http.Request) string {
 	if ip == "" {
 		ip = r.RemoteAddr
 	}
+
+	// check localhost
+	if ip[:5] == "[::1]" {
+		ip = "127.0.0.1"
+	}
+
+	// remove port from ip
+	ip = strings.Split(ip, ":")[0]
 
 	return ip
 }

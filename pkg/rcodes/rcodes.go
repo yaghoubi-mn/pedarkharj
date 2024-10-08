@@ -13,11 +13,12 @@ const (
 	// user
 	CodeSendToNumber  = "code_sent_to_number"
 	VerifyNumberFirst = "verify_number_first"
-	WrongCode         = "wrong_code"
+	WrongOTP          = "wrong_otp"
 	GoSignup          = "go_signup"
 	OTPExpired        = "otp_expired"
 	ZeroCodeFirst     = "zero_code_first"
 	NumberDelay       = "number_delay"
+	NumberNotExist    = "number_not_exist"
 )
 
 type ResponseCode string
