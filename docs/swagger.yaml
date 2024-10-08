@@ -62,12 +62,14 @@ paths:
     get:
       consumes:
       - application/json
-      description: get user info
+      description: get user info (Authentication Required)
       produces:
       - application/json
       responses:
         "200":
           description: OK
+        "401":
+          description: Unauthorized
         "500":
           description: Internal Server Error
       tags:

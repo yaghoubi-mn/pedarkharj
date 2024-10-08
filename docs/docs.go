@@ -98,7 +98,7 @@ const docTemplate = `{
         },
         "/users/info": {
             "get": {
-                "description": "get user info",
+                "description": "get user info (Authentication Required)",
                 "consumes": [
                     "application/json"
                 ],
@@ -111,6 +111,9 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
                     },
                     "500": {
                         "description": "Internal Server Error"

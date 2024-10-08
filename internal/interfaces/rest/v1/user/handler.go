@@ -159,11 +159,12 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetUserInfo godoc
-// @Description get user info
+// @Description get user info (Authentication Required)
 // @Tags users
 // @Accept json
 // @Produce json
 // @Success 200
+// @Failure 401
 // @Failure 500
 // @Router /users/info [get]
 func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
