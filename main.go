@@ -19,7 +19,7 @@ import (
 	"github.com/yaghoubi-mn/pedarkharj/pkg/cache"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
-	_ "github.com/yaghoubi-mn/pedarkharj/pkg/s3"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/s3"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -44,6 +44,9 @@ func main() {
 	if err != nil {
 		slog.Warn("Cannot load env variables", "error", err.Error())
 	}
+
+	// setup s3
+	s3.Init()
 
 	// setup database
 	db := SetupGrom()

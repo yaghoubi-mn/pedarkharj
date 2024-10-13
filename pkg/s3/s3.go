@@ -1,7 +1,6 @@
 package s3
 
 import (
-	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -14,23 +13,25 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-var accessKey string
-var secretKey string
-var apiUrlValue string
-var bucketName string
+var (
+	accessKey         string
+	secretKey         string
+	apiUrlValue       string
+	bucketName        string
+	accessUrl         string
+	accessUrlProtocol string
 
-var s3Client *s3.S3
+	s3Client *s3.S3
+)
 
-func init() {
-	// for _, s := range os.Environ() {
-	// 	fmt.Println(s)
-	// }
+func Init() {
 
 	accessKey = os.Getenv("S3_ACCESS_KEY")
 	secretKey = os.Getenv("S3_SECRET_KEY")
 	bucketName = os.Getenv("S3_BUCKET_NAME")
 	apiUrlValue = os.Getenv("S3_API_URL_VALUE")
-	fmt.Println(accessKey, secretKey, bucketName, apiUrlValue)
+	accessUrl = os.Getenv("S3_ACCESS_URL")
+	accessUrlProtocol = os.Getenv("S3_ACCESS_URL_PROTOCOL")
 
 	s3Config := &aws.Config{
 		Credentials:      credentials.NewStaticCredentials(accessKey, secretKey, ""),
@@ -77,10 +78,11 @@ func DeleteObject(key string) error {
 	return err
 }
 
-// []string example: {"https://domain.name/folder/name.format", ... }
+// output []string example: {"https://domain.name/folder/name.format", ... }
 func GetListObjects(key string) ([]string, error) {
 	resp, err := s3Client.ListObjects(&s3.ListObjectsInput{
 		Bucket: &bucketName,
+		Prefix: &key,
 	})
 	if err != nil {
 		return nil, err
@@ -88,8 +90,10 @@ func GetListObjects(key string) ([]string, error) {
 
 	list := make([]string, len(resp.Contents))
 	for i, item := range resp.Contents {
-		list[i] = path.Join(apiUrlValue, *item.Key)
+		list[i] = accessUrlProtocol + path.Join(accessUrl, *item.Key)
 	}
 
+	// skip first item. because it's folder location
+	list = list[1:]
 	return list, nil
 }

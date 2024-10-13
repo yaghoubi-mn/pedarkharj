@@ -38,14 +38,13 @@ func (a *authMiddleware) EnsureAuthentication(next http.Handler) http.Handler {
 		}
 
 		access = access[7:]
-		fmt.Println(access)
 
 		var user domain_user.User
 		var err error
 		user.ID, user.Name, user.Number, user.IsRegistered, err = jwt.GetUserFromAccess(access)
 		if err != nil {
-			fmt.Println(err)
-			a.response.ErrorResponse(w, 401, rcodes.InvalidToken, errors.New("invalid token"))
+			fmt.Println("JWT ERROR:", err)
+			a.response.ErrorResponse(w, 401, rcodes.InvalidToken, errors.New("authorization: invalid token"))
 			return
 		}
 

@@ -11,6 +11,8 @@ import (
 	user_handler "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/user"
 )
 
+var URLs []string
+
 func NewRouter(userAppService app_user.UserAppService, deviceAppService app_device.DeviceAppService) *http.ServeMux {
 	mux := http.NewServeMux()
 	// authMux := http.NewServeMux()
@@ -36,14 +38,18 @@ func NewRouter(userAppService app_user.UserAppService, deviceAppService app_devi
 		}
 	})
 
-	// user routes
+	// #user routes
+	// authentication
 	registerRouteFunc(mux, "POST", "/users/verify-number", userHandler.VerifyNumber)
 	registerRouteFunc(mux, "POST", "/users/signup", userHandler.SignupUser)
 	registerRouteFunc(mux, "POST", "/users/check-number", userHandler.CheckNumber)
 	registerRouteFunc(mux, "POST", "/users/login", userHandler.Login)
 	registerRouteFunc(mux, "POST", "/users/refresh", userHandler.GetAccessFromRefresh)
+	// user info
 	registerRoute(mux, "GET", "/users/info", authMiddleware.EnsureAuthentication(http.HandlerFunc(userHandler.GetUserInfo)))
+	// avatar
 	registerRoute(mux, "POST", "/users/avatar", authMiddleware.EnsureAuthentication(http.HandlerFunc(userHandler.ChooseUserAvatar)))
+	registerRouteFunc(mux, "GET", "/users/avatar", userHandler.GetAvatars)
 
 	// device routes
 	registerRoute(mux, "POST", "/devices/logout", authMiddleware.EnsureAuthentication(http.HandlerFunc((deviceHandler.Logout))))
@@ -58,6 +64,7 @@ func NewRouter(userAppService app_user.UserAppService, deviceAppService app_devi
 	m := http.NewServeMux()
 	m.Handle("/api/v1/", http.StripPrefix("/api/v1", jsonMiddleware.AddCORSHeaders(jsonMiddleware.EnsureApplicationJson(mux))))
 
+	URLs = nil
 	return m
 }
 
@@ -72,7 +79,14 @@ func registerRouteFunc(mux *http.ServeMux, method string, url string, handler fu
 // }
 
 func registerRoute(mux *http.ServeMux, method string, url string, handle http.Handler) {
+
 	mux.Handle(method+" "+url, handle)
+
+	// check url is already handled
+	if isURLAlreadyHandled(url) {
+		return
+	}
+	saveURLAsHandled(url)
 
 	mux.HandleFunc("OPTIONS "+url, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -80,4 +94,22 @@ func registerRoute(mux *http.ServeMux, method string, url string, handle http.Ha
 		w.Header().Set("Access-Control-Allow-Headers", "content-type, access-control-allow-origin, accept, user-agent, authorization")
 		w.Header().Set("Access-Control-Allow-Max-Age", "86400")
 	})
+}
+
+func saveURLAsHandled(url string) {
+	if URLs == nil {
+		URLs = make([]string, 10)
+	}
+
+	URLs = append(URLs, url)
+}
+
+func isURLAlreadyHandled(url string) bool {
+	for _, u := range URLs {
+		if url == u {
+			return true
+		}
+	}
+
+	return false
 }

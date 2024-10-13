@@ -19,6 +19,7 @@ const (
 	ZeroCodeFirst     = "zero_code_first"
 	NumberDelay       = "number_delay"
 	NumberNotExist    = "number_not_exist"
+	AvatarNotFound = "avatar_not_found"
 )
 
 type ResponseCode string

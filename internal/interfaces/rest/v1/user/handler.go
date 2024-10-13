@@ -283,3 +283,14 @@ func (h *Handler) ChooseUserAvatar(w http.ResponseWriter, r *http.Request) {
 
 	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
+
+func (h *Handler) GetAvatars(w http.ResponseWriter, r *http.Request) {
+
+	responseDTO := h.appService.GetAvatars()
+	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil{
+		h.response.DTOResponse(w, responseDTO)
+		return
+	}
+
+	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
+}

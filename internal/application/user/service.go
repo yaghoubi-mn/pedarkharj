@@ -28,6 +28,7 @@ type UserAppService interface {
 	Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
 	GetAccessFromRefresh(refresh string) (responseDTO datatypes.ResponseDTO)
 	ChooseUserAvatar(avatarName string, userID uint64) datatypes.ResponseDTO
+	GetAvatars() datatypes.ResponseDTO
 }
 
 type service struct {
@@ -340,6 +341,12 @@ func (s *service) GetUserInfo(user domain_user.User) (responseDTO datatypes.Resp
 	responseDTO.Data = make(map[string]any)
 
 	var userOutput UserOutput
+	// get user from database for full information
+	user, err := s.repo.GetByID(user.ID)
+	if err != nil {
+		responseDTO.ServerErr = err
+		return
+	}
 	userOutput.Fill(user)
 
 	responseDTO.Data["data"] = userOutput
@@ -463,6 +470,7 @@ func (s *service) ChooseUserAvatar(avatarName string, userID uint64) (responseDT
 	}
 
 	if !found {
+		responseDTO.ResponseCode = rcodes.AvatarNotFound
 		responseDTO.UserErr = errors.New("avatar: avatar not found")
 		return
 	}
@@ -482,4 +490,18 @@ func (s *service) ChooseUserAvatar(avatarName string, userID uint64) (responseDT
 
 	responseDTO.Data["msg"] = "avatar saved"
 	return
+}
+
+func (s *service) GetAvatars() (responseDTO datatypes.ResponseDTO) {
+	responseDTO.Data = make(map[string]any)
+
+	avatars, err := s3.GetListObjects(config.AvatarPath)
+	if err != nil {
+		responseDTO.ServerErr = err
+		return
+	}
+
+	responseDTO.Data["data"] = avatars
+	return
+
 }
