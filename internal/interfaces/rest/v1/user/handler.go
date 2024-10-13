@@ -244,3 +244,42 @@ func (h *Handler) GetAccessFromRefresh(w http.ResponseWriter, r *http.Request) {
 
 	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
+
+// GetAccessFromRefersh godoc
+// @Description Choose user avatar
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param avatar body string true "Avatar name"
+// @Success 200
+// @Failure 500
+// @Failure 400 "BadRequest:<br>code=invalid_field"
+// @Router /users/avatar [post]
+func (h *Handler) ChooseUserAvatar(w http.ResponseWriter, r *http.Request) {
+
+	var avatarInput app_user.AvatarChooseInput
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	decoder.Decode(&avatarInput)
+	defer r.Body.Close()
+
+	iUser := r.Context().Value("user")
+	if iUser == nil {
+		h.response.ServerErrorResponse(w, errors.New("cannot get user from context"))
+		return
+	}
+	user, ok := iUser.(domain_user.User)
+	if !ok {
+		h.response.ServerErrorResponse(w, errors.New("cannot cast context user to user"))
+		return
+	}
+
+	responseDTO := h.appService.ChooseUserAvatar(avatarInput.Avatar, user.ID)
+	if responseDTO.UserErr != nil || responseDTO.ServerErr != nil {
+		h.response.DTOResponse(w, responseDTO)
+		return
+	}
+
+	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
+}

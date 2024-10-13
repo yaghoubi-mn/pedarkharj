@@ -28,12 +28,18 @@ type RefreshInput struct {
 	Refresh string `json:"refresh"`
 }
 
+type AvatarChooseInput struct {
+	Avatar string `json:"avatar"`
+}
+
 type UserOutput struct {
 	Name   string `json:"name"`
-	Number string `json:"number"`
+	Number string `json:"number"` // number must be fill from user contact for security. user contact may be empty for adding unknown user to user contact
+	Avatar string `json:"avatar"`
 }
 
 func (u *UserOutput) Fill(user domain_user.User) {
 	u.Name = user.Name
 	u.Number = user.Number
+	u.Avatar = user.Avatar
 }

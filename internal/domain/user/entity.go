@@ -8,6 +8,7 @@ type User struct {
 	Number   string `gorm:"size:13,not null,index,unique" validate:"e164,required,size:15"`
 	Password string `gorm:"size:30,not null" validate:"size:30"`
 	Salt     string `gorm:"size:32,not null"`
+	Avatar   string `gorm:"size:500,default:''"`
 
 	RegisteredAt time.Time `gorm:"not null"`
 	IsRegistered bool      `gorm:"not null"`

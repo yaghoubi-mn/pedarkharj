@@ -43,6 +43,7 @@ func NewRouter(userAppService app_user.UserAppService, deviceAppService app_devi
 	registerRouteFunc(mux, "POST", "/users/login", userHandler.Login)
 	registerRouteFunc(mux, "POST", "/users/refresh", userHandler.GetAccessFromRefresh)
 	registerRoute(mux, "GET", "/users/info", authMiddleware.EnsureAuthentication(http.HandlerFunc(userHandler.GetUserInfo)))
+	registerRoute(mux, "POST", "/users/avatar", authMiddleware.EnsureAuthentication(http.HandlerFunc(userHandler.ChooseUserAvatar)))
 
 	// device routes
 	registerRoute(mux, "POST", "/devices/logout", authMiddleware.EnsureAuthentication(http.HandlerFunc((deviceHandler.Logout))))

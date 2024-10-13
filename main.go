@@ -19,6 +19,7 @@ import (
 	"github.com/yaghoubi-mn/pedarkharj/pkg/cache"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
+	_ "github.com/yaghoubi-mn/pedarkharj/pkg/s3"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -75,7 +76,6 @@ func main() {
 
 	mux := setupRouter(db, validatorIns, cacheRepo)
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
-	fmt.Println(os.Args)
 	if len(os.Args) > 1 && os.Args[1] == "debug" {
 		slog.Info("listening at http://127.0.0.1:2222")
 		slog.Error(http.ListenAndServe(":2222", mux).Error())

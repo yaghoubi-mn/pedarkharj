@@ -16,10 +16,6 @@ type UserDomainService interface {
 	Login(number, inputPassword, realPassword, salt string, isBlocked bool) (userError, serverError error)
 }
 
-type DeviceRepository interface {
-	CreateWithParam(name string, lastIP string, firstLogin time.Time, lastLogin time.Time, refreshToken string) error
-}
-
 type service struct {
 	validator datatypes.Validator
 }

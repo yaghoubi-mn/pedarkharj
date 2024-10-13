@@ -3,9 +3,14 @@ package config
 import "time"
 
 const (
+	Debug = true
+
+	// jwt
 	JWtRefreshExpire = 30 * 24 * time.Hour
 	JWTAccessExpire  = 15 * time.Minute
-	Debug            = true
+
+	// s3
+	AvatarPath = "root/avatars/"
 )
 
 var (

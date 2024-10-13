@@ -15,6 +15,7 @@ import (
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/s3"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/service_errors"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 )
@@ -26,6 +27,7 @@ type UserAppService interface {
 	CheckNumber(numberInput NumberInput) datatypes.ResponseDTO
 	Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
 	GetAccessFromRefresh(refresh string) (responseDTO datatypes.ResponseDTO)
+	ChooseUserAvatar(avatarName string, userID uint64) datatypes.ResponseDTO
 }
 
 type service struct {
@@ -441,4 +443,43 @@ func (s *service) GetAccessFromRefresh(refresh string) (responseDTO datatypes.Re
 
 	return responseDTO
 
+}
+
+func (s *service) ChooseUserAvatar(avatarName string, userID uint64) (responseDTO datatypes.ResponseDTO) {
+	responseDTO.Data = make(map[string]any)
+
+	avatars, err := s3.GetListObjects(config.AvatarPath)
+	if err != nil {
+		responseDTO.ServerErr = err
+		return
+	}
+
+	found := false
+	for _, avatar := range avatars {
+		if avatar == avatarName {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		responseDTO.UserErr = errors.New("avatar: avatar not found")
+		return
+	}
+
+	user, err := s.repo.GetByID(userID)
+	if err != nil {
+		responseDTO.ServerErr = err
+		return
+	}
+
+	user.Avatar = avatarName
+	err = s.repo.Update(user)
+	if err != nil {
+		responseDTO.ServerErr = err
+		return
+	}
+
+	responseDTO.Data["msg"] = "avatar saved"
+	return
 }
