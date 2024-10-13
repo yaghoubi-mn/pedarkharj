@@ -59,6 +59,62 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/avatar": {
+            "get": {
+                "description": "Get list of avatars",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            },
+            "post": {
+                "description": "Choose user avatar",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "parameters": [
+                    {
+                        "description": "Avatar URL",
+                        "name": "avatar",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "BadRequest:\u003cbr\u003ecode=invalid_field"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/users/check-number": {
             "post": {
                 "description": "Check number is exist",
@@ -294,7 +350,7 @@ const docTemplate = `{
                     {
                         "example": 12345,
                         "description": "OTP code",
-                        "name": "code",
+                        "name": "otp",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -319,7 +375,7 @@ const docTemplate = `{
                         "description": "Ok. code: go_signup. verify number done. user must signup"
                     },
                     "400": {
-                        "description": "BadRequest:\u003cbr\u003ecode=zero_code_first: Must zero the otp code first.\u003cbr\u003ecode=wrong_code: The OTP is wrong.\u003cbr\u003ecode=number_delay: Wait some minutes.\u003cbr\u003ecode=invalid_field: a field is invalid"
+                        "description": "BadRequest:\u003cbr\u003ecode=zero_code_first: Must zero the otp code first.\u003cbr\u003ecode=wrong_otp: The OTP is wrong.\u003cbr\u003ecode=number_delay: Wait some minutes.\u003cbr\u003ecode=invalid_field: a field is invalid"
                     },
                     "500": {
                         "description": "Internal Server Error"

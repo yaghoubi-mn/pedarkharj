@@ -250,7 +250,7 @@ func (h *Handler) GetAccessFromRefresh(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param avatar body string true "Avatar name"
+// @Param avatar body string true "Avatar URL"
 // @Success 200
 // @Failure 500
 // @Failure 400 "BadRequest:<br>code=invalid_field"
@@ -284,10 +284,18 @@ func (h *Handler) ChooseUserAvatar(w http.ResponseWriter, r *http.Request) {
 	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
 
+// GetAccessFromRefersh godoc
+// @Description Get list of avatars
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200
+// @Failure 500
+// @Router /users/avatar [get]
 func (h *Handler) GetAvatars(w http.ResponseWriter, r *http.Request) {
 
 	responseDTO := h.appService.GetAvatars()
-	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil{
+	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
 		h.response.DTOResponse(w, responseDTO)
 		return
 	}

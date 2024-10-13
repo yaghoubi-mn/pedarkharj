@@ -34,6 +34,42 @@ paths:
           description: Internal Server Error
       tags:
       - devices
+  /users/avatar:
+    get:
+      consumes:
+      - application/json
+      description: Get list of avatars
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Choose user avatar
+      parameters:
+      - description: Avatar URL
+        in: body
+        name: avatar
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: BadRequest:<br>code=invalid_field
+        "500":
+          description: Internal Server Error
+      tags:
+      - users
   /users/check-number:
     post:
       consumes:
@@ -187,7 +223,7 @@ paths:
       - description: OTP code
         example: 12345
         in: body
-        name: code
+        name: otp
         required: true
         schema:
           type: integer
@@ -206,7 +242,7 @@ paths:
           description: 'Ok. code: go_signup. verify number done. user must signup'
         "400":
           description: 'BadRequest:<br>code=zero_code_first: Must zero the otp code
-            first.<br>code=wrong_code: The OTP is wrong.<br>code=number_delay: Wait
+            first.<br>code=wrong_otp: The OTP is wrong.<br>code=number_delay: Wait
             some minutes.<br>code=invalid_field: a field is invalid'
         "500":
           description: Internal Server Error
