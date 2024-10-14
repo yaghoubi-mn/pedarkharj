@@ -308,6 +308,20 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		responseDTO.ServerErr = err
 		return responseDTO
 	}
+
+	// select random avatar for user
+	// get list of avatars
+	avatars, err := s3.GetListObjects(config.AvatarPath)
+	if err != nil {
+		responseDTO.ServerErr = err
+		return
+	}
+
+	// select random avatar
+	randomIndex := rand.Intn(len(avatars))
+	user.Avatar = avatars[randomIndex]
+
+	// insert user into database
 	err = s.repo.Create(&user)
 	if err != nil {
 		responseDTO.ServerErr = err
