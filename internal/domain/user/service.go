@@ -14,6 +14,7 @@ type UserDomainService interface {
 	VerifyNumber(number string, code uint, token string, isBlocked bool) (userError error, serverError error)
 	CheckNumber(number string) error
 	Login(number, inputPassword, realPassword, salt string, isBlocked bool) (userError, serverError error)
+	ResetPassword(number, password, token string) (userErr, serverErr error, salt, outPassword string)
 }
 
 type service struct {
@@ -70,6 +71,10 @@ func (s *service) Signup(user *User, token string) (error, error) {
 		return service_errors.ErrSmallPassword, nil
 	}
 
+	if len(user.Password) > 30 {
+		return service_errors.ErrLongPassword, nil
+	}
+
 	user.RegisteredAt = time.Now()
 	user.IsRegistered = true
 
@@ -85,6 +90,37 @@ func (s *service) Signup(user *User, token string) (error, error) {
 	}
 
 	return nil, nil
+}
+
+func (s *service) ResetPassword(number, password, token string) (userErr, serverErr error, salt, outPassword string) {
+
+	if err := s.validator.ValidateFieldByFieldName("Number", number, User{}); err != nil {
+		return service_errors.ErrInvalidNumber, nil, "", ""
+	}
+
+	// if err := s.validator.ValidateFieldByFieldName("Password", password, User{}); err!=nil{
+	// 	return service_errors.
+	// }
+
+	if len(password) < 8 {
+		return service_errors.ErrSmallPassword, nil, "", ""
+	}
+
+	if len(password) > 30 {
+		return service_errors.ErrLongPassword, nil, "", ""
+	}
+
+	salt, err := utils.GenerateRandomSalt()
+	if err != nil {
+		return nil, err, "", ""
+	}
+
+	outPassword, err = utils.HashPasswordWithSalt(password, salt, config.BcryptCost)
+	if err != nil {
+		return nil, err, "", ""
+	}
+
+	return nil, nil, salt, outPassword
 }
 
 func (s *service) CheckNumber(number string) error {

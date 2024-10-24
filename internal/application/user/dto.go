@@ -6,6 +6,7 @@ type VerifyNumberInput struct {
 	Number string `json:"number" validate:"required,e164"`
 	OTP    uint   `json:"otp"`
 	Token  string `json:"token" validate:"uuid,omitempty"` // temporary token
+	Mode   string `json:"mode"`                            // signup or reset password
 }
 
 type NumberInput struct {
@@ -30,6 +31,12 @@ type RefreshInput struct {
 
 type AvatarChooseInput struct {
 	Avatar string `json:"avatar"`
+}
+
+type RestPasswordWithNumberInput struct {
+	Number   string `json:"number"`
+	Password string `json:"password"`
+	Token    string `json:"token"`
 }
 
 type UserOutput struct {

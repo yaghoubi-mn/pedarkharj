@@ -76,7 +76,7 @@ func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 
 	// user sent otp code and otp is currect. user already exists in database
 	if step == 3 {
-		responseDTO.Data["msg"] = "You are in!"
+		responseDTO.Data["msg"] = "Go rest password"
 		h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 		return
 	}
@@ -152,6 +152,35 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	if responseDTO.UserErr != nil {
 		h.response.ErrorResponse(w, 400, responseDTO.ResponseCode, responseDTO.UserErr)
+		return
+	}
+
+	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
+}
+
+// ResetPassword godoc
+// @Description Reset user password.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param number body string true "phone number" example(+98123456789)
+// @Param token body string true "Token"
+// @Param password body string true "Password"
+// @Success 200
+// @Failure 500
+// @Failure 400 "BadRequest:<br>code=verify_number_first: User Must be verify number first<br>code=invalid_field: a field is invalid"<br>code=invalid_token: token is invalid
+// @Router /users/reset-password [post]
+func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+
+	var input app_user.RestPasswordWithNumberInput
+	// decode body
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	decoder.Decode(&input)
+
+	responseDTO := h.appService.ResetPassword(input)
+	if responseDTO.UserErr != nil || responseDTO.ServerErr != nil {
+		h.response.DTOResponse(w, responseDTO)
 		return
 	}
 

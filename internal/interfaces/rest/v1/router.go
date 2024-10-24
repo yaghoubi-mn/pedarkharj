@@ -45,6 +45,7 @@ func NewRouter(userAppService app_user.UserAppService, deviceAppService app_devi
 	registerRouteFunc(mux, "POST", "/users/check-number", userHandler.CheckNumber)
 	registerRouteFunc(mux, "POST", "/users/login", userHandler.Login)
 	registerRouteFunc(mux, "POST", "/users/refresh", userHandler.GetAccessFromRefresh)
+	registerRouteFunc(mux, "POST", "/users/reset-password", userHandler.ResetPassword)
 	// user info
 	registerRoute(mux, "GET", "/users/info", authMiddleware.EnsureAuthentication(http.HandlerFunc(userHandler.GetUserInfo)))
 	// avatar

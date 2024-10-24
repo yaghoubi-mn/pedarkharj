@@ -17,6 +17,8 @@ var (
 	// jwt
 	JWtRefreshExpire = 30 * 24 * time.Hour
 	JWTAccessExpire  = 15 * time.Minute
+
+	VerifyNumberCacheExpireTime = 10 * time.Minute
 )
 
 func init() {
