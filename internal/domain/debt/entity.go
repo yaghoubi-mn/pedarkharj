@@ -1,7 +1,7 @@
 package domain_debt
 
 import (
-	"github.com/yaghoubi-mn/pedarkharj/internal/domain/domain_expense"
+	"github.com/yaghoubi-mn/pedarkharj/internal/domain/expense"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 )
 
