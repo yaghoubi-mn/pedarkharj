@@ -163,6 +163,43 @@ paths:
           description: Internal Server Error
       tags:
       - users
+  /users/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Reset user password.
+      parameters:
+      - description: phone number
+        example: "+98123456789"
+        in: body
+        name: number
+        required: true
+        schema:
+          type: string
+      - description: Token
+        in: body
+        name: token
+        required: true
+        schema:
+          type: string
+      - description: Password
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: 'BadRequest:<br>code=verify_number_first: User Must be verify
+            number first<br>code=invalid_field: a field is invalid'
+        "500":
+          description: Internal Server Error
+      tags:
+      - users
   /users/signup:
     post:
       consumes:
