@@ -1,6 +1,4 @@
-package app_user
-
-import domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
+package domain_user
 
 type VerifyNumberInput struct {
 	Number string `json:"number" validate:"required,e164"`
@@ -45,7 +43,7 @@ type UserOutput struct {
 	Avatar string `json:"avatar"`
 }
 
-func (u *UserOutput) Fill(user domain_user.User) {
+func (u *UserOutput) Fill(user User) {
 	u.Name = user.Name
 	u.Number = user.Number
 	u.Avatar = user.Avatar

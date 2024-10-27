@@ -1,6 +1,4 @@
-package app_device
-
-import domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
+package domain_device
 
 type DeviceInput struct {
 	Name         string `validate:"required,name"`
@@ -9,7 +7,7 @@ type DeviceInput struct {
 	UserID       uint64
 }
 
-func (d *DeviceInput) CreateDevice() (device domain_device.Device) {
+func (d *DeviceInput) CreateDevice() (device Device) {
 	device.Name = d.Name
 	device.LastIP = d.IP
 	device.RefreshToken = d.RefreshToken

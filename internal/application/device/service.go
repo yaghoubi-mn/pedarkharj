@@ -10,7 +10,7 @@ import (
 )
 
 type DeviceAppService interface {
-	CreateOrUpdate(deviceInput DeviceInput) error
+	CreateOrUpdate(deviceInput domain_device.DeviceInput) error
 	GetDeviceUserByRefreshToken(refresh string) (user domain_user.User, userErr error, serverErr error)
 	Logout(userID uint64, deviceName string) datatypes.ResponseDTO
 	LogoutAllUserDevices(userID uint64) datatypes.ResponseDTO
@@ -28,7 +28,7 @@ func NewDeviceAppService(repo domain_device.DeviceDomainRepository, domainServic
 	}
 }
 
-func (s *service) CreateOrUpdate(deviceInput DeviceInput) error {
+func (s *service) CreateOrUpdate(deviceInput domain_device.DeviceInput) error {
 
 	device := deviceInput.CreateDevice()
 

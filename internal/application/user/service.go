@@ -9,7 +9,9 @@ import (
 
 	"github.com/google/uuid"
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
+
 	// app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
+	domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 	"github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/config"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/database_errors"
@@ -23,15 +25,15 @@ import (
 )
 
 type UserAppService interface {
-	VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (step int, responseDTO datatypes.ResponseDTO)
-	Signup(userInput SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
+	VerifyNumber(verifyNumberInput domain_user.VerifyNumberInput, deviceName string, deviceIP string) (step int, responseDTO datatypes.ResponseDTO)
+	Signup(userInput domain_user.SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
 	GetUserInfo(user domain_user.User) datatypes.ResponseDTO
-	CheckNumber(numberInput NumberInput) datatypes.ResponseDTO
-	Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
+	CheckNumber(numberInput domain_user.NumberInput) datatypes.ResponseDTO
+	Login(loginInput domain_user.LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
 	GetAccessFromRefresh(refresh string) (responseDTO datatypes.ResponseDTO)
 	ChooseUserAvatar(avatarName string, userID uint64) datatypes.ResponseDTO
 	GetAvatars() datatypes.ResponseDTO
-	ResetPassword(input RestPasswordWithNumberInput) datatypes.ResponseDTO
+	ResetPassword(input domain_user.RestPasswordWithNumberInput) datatypes.ResponseDTO
 }
 
 type service struct {
@@ -50,7 +52,7 @@ func NewUserService(repo domain_user.UserDomainRepository, cacheRepo datatypes.C
 	}
 }
 
-func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (int, datatypes.ResponseDTO) {
+func (s *service) VerifyNumber(verifyNumberInput domain_user.VerifyNumberInput, deviceName string, deviceIP string) (int, datatypes.ResponseDTO) {
 
 	var responseDTO datatypes.ResponseDTO
 	responseDTO.Data = make(map[string]any)
@@ -271,7 +273,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 	}
 }
 
-func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
+func (s *service) Signup(userInput domain_user.SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
 
 	responseDTO.Data = make(map[string]any)
 
@@ -360,7 +362,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 	}
 
 	// create device
-	err = s.deviceAppService.CreateOrUpdate(app_device.DeviceInput{
+	err = s.deviceAppService.CreateOrUpdate(domain_device.DeviceInput{
 		UserID:       user.ID,
 		Name:         deviceName,
 		IP:           deviceIP,
@@ -376,7 +378,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 	return responseDTO
 }
 
-func (s *service) ResetPassword(input RestPasswordWithNumberInput) (responseDTO datatypes.ResponseDTO) {
+func (s *service) ResetPassword(input domain_user.RestPasswordWithNumberInput) (responseDTO datatypes.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	userErr, serverErr, salt, hashedPassword := s.domainService.ResetPassword(input.Number, input.Password, input.Token)
@@ -444,7 +446,7 @@ func (s *service) ResetPassword(input RestPasswordWithNumberInput) (responseDTO 
 func (s *service) GetUserInfo(user domain_user.User) (responseDTO datatypes.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
-	var userOutput UserOutput
+	var userOutput domain_user.UserOutput
 	// get user from database for full information
 	user, err := s.repo.GetByID(user.ID)
 	if err != nil {
@@ -457,7 +459,7 @@ func (s *service) GetUserInfo(user domain_user.User) (responseDTO datatypes.Resp
 	return responseDTO
 }
 
-func (s *service) CheckNumber(numberInput NumberInput) (responseDTO datatypes.ResponseDTO) {
+func (s *service) CheckNumber(numberInput domain_user.NumberInput) (responseDTO datatypes.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	err := s.domainService.CheckNumber(numberInput.Number)
@@ -483,7 +485,7 @@ func (s *service) CheckNumber(numberInput NumberInput) (responseDTO datatypes.Re
 
 }
 
-func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
+func (s *service) Login(loginInput domain_user.LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	if err := s.domainService.CheckNumber(loginInput.Number); err != nil {
@@ -521,7 +523,7 @@ func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP s
 	}
 
 	// create device
-	err = s.deviceAppService.CreateOrUpdate(app_device.DeviceInput{
+	err = s.deviceAppService.CreateOrUpdate(domain_device.DeviceInput{
 		UserID:       user.ID,
 		Name:         deviceName,
 		IP:           deviceIP,
