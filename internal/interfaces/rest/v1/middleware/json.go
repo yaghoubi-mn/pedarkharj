@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
@@ -37,6 +39,10 @@ func (j *jsonMiddleware) EnsureApplicationJson(next http.Handler) http.Handler {
 
 func (j *jsonMiddleware) AddCORSHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var input map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&input)
+		fmt.Println("\ninput:", input)
+		// TODO: remove comment
 		// if r.Method == "POST" || r.Method == "GET" || r.Method == "PUT" || r.Method == "DELETE" {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, DELETE, PUT")
