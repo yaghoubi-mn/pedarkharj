@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -35,6 +37,14 @@ func NewValidator() datatypes.Validator {
 
 	})
 	vald.RegisterValidation("allowempty", func(fl validator_lib.FieldLevel) bool { return true })
+	vald.RegisterValidation("phone_number", func(fl validator_lib.FieldLevel) bool {
+		ok, err := regexp.Match("\\+?9\\d{9}$", []byte(fl.Field().String()))
+		if err != nil {
+			slog.Error("error in number regex", "err", err)
+		}
+
+		return ok
+	})
 	vald.RegisterValidation("useragent", func(fl validator_lib.FieldLevel) bool {
 		for _, char := range INVALID_USERAGENT_CHARS {
 			if strings.Contains(fmt.Sprintf("%v", fl.Field()), char) {
