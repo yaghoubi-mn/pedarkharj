@@ -32,7 +32,7 @@ func NewValidator() datatypes.Validator {
 				return false
 			}
 		}
-
+		fmt.Println("name", fl.Field().String(), "is valid")
 		return true
 
 	})
@@ -57,7 +57,9 @@ func NewValidator() datatypes.Validator {
 
 	for i := 0; i < 1000; i += 5 {
 
-		vald.RegisterValidation("size:"+strconv.Itoa(i), func(fl validator_lib.FieldLevel) bool { return true })
+		vald.RegisterValidation("size:"+strconv.Itoa(i), func(fl validator_lib.FieldLevel) bool {
+			return len(fl.Field().String()) <= i
+		})
 	}
 	return &validate{
 		validator: vald,

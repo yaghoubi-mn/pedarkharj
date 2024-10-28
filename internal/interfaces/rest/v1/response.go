@@ -51,7 +51,7 @@ func (j *jsonResponse) ErrorResponse(w http.ResponseWriter, status int, code str
 	for _, err := range errs {
 		splited := strings.Split(err.Error(), ": ")
 		if len(splited) == 1 {
-			temp["non-field"] = splited[0]
+			temp["non_field"] = splited[0]
 		} else {
 			temp[splited[0]] = splited[1]
 		}
