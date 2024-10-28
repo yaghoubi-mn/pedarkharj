@@ -11,18 +11,18 @@ const (
 	Unauthenticated   = "unauthenticated"
 
 	// user
-	CodeSendToNumber  = "code_sent_to_number"
-	VerifyNumberFirst = "verify_number_first"
-	WrongOTP          = "wrong_otp"
-	GoSignup          = "go_signup"
-	OTPExpired        = "otp_expired"
-	ZeroCodeFirst     = "zero_code_first"
-	NumberDelay       = "number_delay"
-	NumberNotExist    = "number_not_exist"
-	AvatarNotFound    = "avatar_not_found"
-	UserAlreadyExist  = "user_already_exist"
-	UserNotExist      = "user_not_exist"
-	GoRestPassword = "go_reset_password"
+	CodeSendToNumber      = "code_sent_to_number"
+	VerifyNumberFirst     = "verify_number_first"
+	WrongOTP              = "wrong_otp"
+	GoSignup              = "go_signup"
+	OTPExpired            = "otp_expired"
+	ZeroCodeFirst         = "zero_code_first"
+	NumberDelay           = "number_delay"
+	NumberNotExist        = "number_not_exist"
+	AvatarNotFound        = "avatar_not_found"
+	UserAlreadyRegistered = "user_already_registered"
+	UserNotRegistered     = "user_not_registered"
+	GoRestPassword        = "go_reset_password"
 )
 
 type ResponseCode string

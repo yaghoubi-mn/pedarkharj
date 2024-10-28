@@ -4,27 +4,35 @@ import "time"
 
 type ExpenseDebtOuput struct {
 	// expense
-	ID          uint64
-	Name        string
-	Description string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          uint64    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 
 	// debt
-	CreditorID                   uint64
-	DebtorID                     uint64
-	Amount                       uint64
-	Type                         string
-	IsCreditorAccepted           bool
-	IsDebtorAccepted             bool
-	IsCreditorRejected           bool
-	IsDebtorRejected             bool
-	IsPaid                       bool
-	IsPaymentAccpeted            bool
-	IsCreditorRequestedForDelete bool
-	IsDebtorRequestedForDelete   bool
+	CreditorID                   uint64 `json:"creditor_id"`
+	DebtorID                     uint64 `json:"debtor_id"`
+	Amount                       uint64 `json:"amount"`
+	Type                         string `json:"type"`
+	IsCreditorAccepted           bool   `json:"is_creditor_accepted"`
+	IsDebtorAccepted             bool   `json:"is_debtor_accepted"`
+	IsCreditorRejected           bool   `json:"is_creditor_rejected"`
+	IsDebtorRejected             bool   `json:"is_debtor_rejected"`
+	IsPaid                       bool   `json:"is_paid"`
+	IsPaymentAccpeted            bool   `json:"is_payment_accpeted"`
+	IsCreditorRequestedForDelete bool   `json:"is_creditor_requested_for_delete"`
+	IsDebtorRequestedForDelete   bool   `json:"is_debtor_requested_for_delete"`
 
 	// user
-	UserAvatar string
-	UserName   string
+	UserAvatar string `json:"user_avatar"`
+	UserName   string `json:"user_name"`
+}
+
+type ExpenseInput struct {
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Creditors   map[string]uint64 `json:"creditors"` // {"<ID>": <Amount>, ...}
+	Debtors     []uint64          `json:"debtors"`   // list if debtors IDs
+
 }

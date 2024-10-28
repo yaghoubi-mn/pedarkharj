@@ -14,4 +14,5 @@ var (
 	ErrLongName            = errors.New("name: long name")
 	ErrSmallName           = errors.New("name: small name")
 	ErrWrongPassword       = errors.New("password: wrong password")
+	ErrUserNotRegistered   = errors.New("user not registered")
 )

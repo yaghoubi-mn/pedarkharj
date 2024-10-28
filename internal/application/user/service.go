@@ -191,79 +191,93 @@ func (s *service) VerifyNumber(verifyNumberInput domain_user.VerifyNumberInput, 
 			// get user
 			user, databaseErr := s.repo.GetByNumber(verifyNumberInput.Number)
 
+			var isUserRegistered bool
+			isUserExist := true
+
+			isUserRegistered = user.IsRegistered
+
 			if databaseErr != nil {
 				if databaseErr == database_errors.ErrRecordNotFound {
+					isUserRegistered = false
+					isUserExist = false
 
-					// becuase user not found only signup mode is allowed
-					if verifyNumberInput.Mode != "signup" {
-						responseDTO.ResponseCode = rcodes.UserNotExist
-						responseDTO.Data["msg"] = "User not exist. This mode not allowed"
-						responseDTO.UserErr = errors.New("user not exist")
-						return 0, responseDTO
-					}
+				} else {
+					responseDTO.ServerErr = err
+					return 0, responseDTO
+				}
+			}
 
-					// user not exist. redirect to signup
+			if !isUserRegistered {
+				// user not registered
 
-					verifyInfo := make(map[string]string)
-					verifyInfo["token"] = token
-					verifyInfo["mode"] = "signup"
-
-					verifyInfoString, err = utils.ConvertMapToString(verifyInfo)
-					if err != nil {
-						responseDTO.ServerErr = err
-						return 0, responseDTO
-					}
-
-					// save number and token to cache for signup
-					err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTime)
-					if err != nil {
-						responseDTO.ServerErr = err
-						return 0, responseDTO
-					}
-
-					responseDTO.ResponseCode = rcodes.GoSignup
-					return 2, responseDTO
+				// becuase user not found only signup mode is allowed
+				if verifyNumberInput.Mode != "signup" {
+					responseDTO.ResponseCode = rcodes.UserNotRegistered
+					responseDTO.UserErr = errors.New("user not exist. reset_password not allowed")
+					return 0, responseDTO
 				}
 
-				responseDTO.ServerErr = err
-				return 0, responseDTO
+				// user not exist. redirect to signup
+
+				verifyInfo := make(map[string]string)
+				verifyInfo["token"] = token
+				verifyInfo["mode"] = "signup"
+				verifyInfo["is_user_exist"] = strconv.FormatBool(isUserExist)
+
+				verifyInfoString, err = utils.ConvertMapToString(verifyInfo)
+				if err != nil {
+					responseDTO.ServerErr = err
+					return 0, responseDTO
+				}
+
+				// save number and token to cache for signup
+				err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTime)
+				if err != nil {
+					responseDTO.ServerErr = err
+					return 0, responseDTO
+				}
+
+				responseDTO.ResponseCode = rcodes.GoSignup
+				return 2, responseDTO
+
+			} else {
+				// user registered
+
+				// user exist so just reset password allowed
+				if verifyNumberInput.Mode != "reset_password" {
+					responseDTO.ResponseCode = rcodes.UserAlreadyRegistered
+					responseDTO.UserErr = errors.New("user already exist. signup mode not allowed")
+					return 0, responseDTO
+				}
+
+				// call domain service
+				userErr, serverErr = s.domainService.VerifyNumber(user.Number, uint(otpInt), token, user.IsBlocked)
+				responseDTO.ServerErr = serverErr
+				responseDTO.UserErr = userErr
+				if serverErr != nil || userErr != nil {
+					return 0, responseDTO
+				}
+
+				verifyInfo := make(map[string]string)
+				verifyInfo["token"] = token
+				verifyInfo["mode"] = "reset_password"
+
+				verifyInfoString, err = utils.ConvertMapToString(verifyInfo)
+				if err != nil {
+					responseDTO.ServerErr = err
+					return 0, responseDTO
+				}
+
+				err := s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTime)
+				if err != nil {
+					responseDTO.ServerErr = err
+					return 0, responseDTO
+				}
+
+				responseDTO.Data["msg"] = "go to reset password"
+				responseDTO.ResponseCode = rcodes.GoRestPassword
+				return 3, responseDTO
 			}
-
-			// user exist so just reset password allowed
-			if verifyNumberInput.Mode != "rest_password" {
-				responseDTO.Data["msg"] = "user already exist. This mode not allowed"
-				responseDTO.UserErr = errors.New("user already exist")
-				return 0, responseDTO
-			}
-
-			// call domain service
-			userErr, serverErr = s.domainService.VerifyNumber(user.Number, uint(otpInt), token, user.IsBlocked)
-			responseDTO.ServerErr = serverErr
-			responseDTO.UserErr = userErr
-			if serverErr != nil || userErr != nil {
-				return 0, responseDTO
-			}
-
-			verifyInfo := make(map[string]string)
-			verifyInfo["token"] = token
-			verifyInfo["mode"] = "reset_password"
-
-			verifyInfoString, err = utils.ConvertMapToString(verifyInfo)
-			if err != nil {
-				responseDTO.ServerErr = err
-				return 0, responseDTO
-			}
-
-			err := s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTime)
-			if err != nil {
-				responseDTO.ServerErr = err
-				return 0, responseDTO
-			}
-
-			responseDTO.Data["msg"] = "go to reset password"
-			responseDTO.ResponseCode = rcodes.GoRestPassword
-			return 3, responseDTO
-
 		} else {
 			responseDTO.ResponseCode = rcodes.WrongOTP
 			responseDTO.UserErr = errors.New("code: wrong code")
@@ -348,11 +362,27 @@ func (s *service) Signup(userInput domain_user.SignupUserInput, deviceName strin
 	randomIndex := rand.Intn(len(avatars))
 	user.Avatar = avatars[randomIndex]
 
-	// insert user into database
-	err = s.repo.Create(&user)
-	if err != nil {
-		responseDTO.ServerErr = err
-		return responseDTO
+	isUserExist, ok := verifyInfo["is_user_exist"]
+	if !ok {
+		responseDTO.ServerErr = errors.New("is_user_exist not found in verifyInfo map in signup")
+		return
+	}
+
+	if isUserExist == "true" {
+		// update user
+
+		err = s.repo.UpdateColumns(user)
+		if err != nil {
+			responseDTO.ServerErr = err
+			return
+		}
+	} else {
+		// insert user into database
+		err = s.repo.Create(&user)
+		if err != nil {
+			responseDTO.ServerErr = err
+			return responseDTO
+		}
 	}
 
 	tokens, err := jwt.CreateRefreshAndAccessFromUserWithMap(config.JWtRefreshExpire, config.JWTAccessExpire, user.ID, user.Name, user.Number, user.IsRegistered)
@@ -438,6 +468,13 @@ func (s *service) ResetPassword(input domain_user.RestPasswordWithNumberInput) (
 
 	s.cacheRepo.Delete(input.Number)
 
+	tokens, err := jwt.CreateRefreshAndAccessFromUserWithMap(config.JWtRefreshExpire, config.JWTAccessExpire, user.ID, user.Name, user.Number, user.IsRegistered)
+	if err != nil {
+		responseDTO.ServerErr = err
+		return responseDTO
+	}
+
+	responseDTO.Data = utils.ConvertMapStringStringToMapStringAny(tokens)
 	responseDTO.Data["msg"] = "password updated"
 	return
 
@@ -469,19 +506,27 @@ func (s *service) CheckNumber(numberInput domain_user.NumberInput) (responseDTO 
 		return responseDTO
 	}
 
-	_, err = s.repo.GetByNumber(numberInput.Number)
-
+	user, err := s.repo.GetByNumber(numberInput.Number)
+	isExist := false
 	if err != nil {
 		if err == database_errors.ErrRecordNotFound {
-			responseDTO.Data["isExist"] = false
+			isExist = false
+		} else {
+			responseDTO.ServerErr = err
 			return responseDTO
 		}
-		responseDTO.ServerErr = err
-		return responseDTO
+
 	} else {
-		responseDTO.Data["isExist"] = true
-		return responseDTO
+
+		if user.IsRegistered {
+			isExist = true
+		} else {
+			isExist = false
+		}
 	}
+
+	responseDTO.Data["isExist"] = isExist
+	return responseDTO
 
 }
 
@@ -505,13 +550,16 @@ func (s *service) Login(loginInput domain_user.LoginUserInput, deviceName string
 		return responseDTO
 	}
 
-	userErr, serverErr := s.domainService.Login(user.Number, loginInput.Password, user.Password, user.Salt, user.IsBlocked)
+	userErr, serverErr := s.domainService.Login(user, loginInput.Password)
 	if serverErr != nil {
 		responseDTO.ServerErr = serverErr
 		return responseDTO
 	}
 	if userErr != nil {
 		responseDTO.ResponseCode = rcodes.InvalidField
+		if userErr == service_errors.ErrUserNotRegistered {
+			responseDTO.ResponseCode = rcodes.UserNotRegistered
+		}
 		responseDTO.UserErr = userErr
 		return responseDTO
 	}

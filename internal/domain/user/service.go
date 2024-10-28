@@ -13,7 +13,7 @@ type UserDomainService interface {
 	Signup(user *User, token string) (userError error, serverError error)
 	VerifyNumber(number string, code uint, token string, isBlocked bool) (userError error, serverError error)
 	CheckNumber(number string) error
-	Login(number, inputPassword, realPassword, salt string, isBlocked bool) (userError, serverError error)
+	Login(user User, realPassword string) (userError, serverError error)
 	ResetPassword(number, password, token string) (userErr, serverErr error, salt, outPassword string)
 }
 
@@ -133,18 +133,22 @@ func (s *service) CheckNumber(number string) error {
 }
 
 // realPassword is hashed (stored password in database)
-func (s *service) Login(number, inputPassword, hashedRealPassword, salt string, isBlocked bool) (error, error) {
+func (s *service) Login(user User, inputPassword string) (error, error) {
 
-	if isBlocked {
+	if user.IsBlocked {
 		return service_errors.ErrBlockedUser, nil
 	}
 
-	if err := utils.CompareHashAndPassword(hashedRealPassword, inputPassword, salt); err != nil {
+	if err := utils.CompareHashAndPassword(user.Password, inputPassword, user.Salt); err != nil {
 		return service_errors.ErrWrongPassword, nil
 	}
 
-	if err := s.validator.ValidateFieldByFieldName("Number", number, User{}); err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Number", user.Number, User{}); err != nil {
 		return service_errors.ErrInvalidNumber, nil
+	}
+
+	if !user.IsRegistered {
+		return service_errors.ErrUserNotRegistered, nil
 	}
 
 	return nil, nil

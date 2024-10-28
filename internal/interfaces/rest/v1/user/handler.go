@@ -38,7 +38,7 @@ func NewHandler(appService app_user.UserAppService, response datatypes.Response)
 // @Failure 400 "BadRequest:<br>code=zero_code_first: Must zero the otp code first.<br>code=wrong_otp: The OTP is wrong.<br>code=number_delay: Wait some minutes.<br>code=invalid_field: a field is invalid"
 // @Router /users/verify-number [post]
 func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
-	var verifyNumberInput app_user.VerifyNumberInput
+	var verifyNumberInput domain_user.VerifyNumberInput
 	// decode body
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -100,7 +100,7 @@ func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 "BadRequest:<br>code=verify_number_first: User Must be verify number first<br>code=invalid_field: a field is invalid"<br>code=invalid_token: token is invalid
 // @Router /users/signup [post]
 func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
-	var userInput app_user.SignupUserInput
+	var userInput domain_user.SignupUserInput
 	// decode body
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -139,7 +139,7 @@ func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 "BadRequest:<br>code=invalid_field: a field is invalid"
 // @Router /users/login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	var userInput app_user.LoginUserInput
+	var userInput domain_user.LoginUserInput
 	// decode body
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -172,7 +172,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Router /users/reset-password [post]
 func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
-	var input app_user.RestPasswordWithNumberInput
+	var input domain_user.RestPasswordWithNumberInput
 	// decode body
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
@@ -227,7 +227,7 @@ func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 // @Router /users/check-number [post]
 func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
 
-	var numberInput app_user.NumberInput
+	var numberInput domain_user.NumberInput
 
 	json.NewDecoder(r.Body).Decode(&numberInput)
 
@@ -257,7 +257,7 @@ func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
 // @Router /users/refresh [post]
 func (h *Handler) GetAccessFromRefresh(w http.ResponseWriter, r *http.Request) {
 
-	var refreshInput app_user.RefreshInput
+	var refreshInput domain_user.RefreshInput
 
 	json.NewDecoder(r.Body).Decode(&refreshInput)
 
@@ -286,7 +286,7 @@ func (h *Handler) GetAccessFromRefresh(w http.ResponseWriter, r *http.Request) {
 // @Router /users/avatar [post]
 func (h *Handler) ChooseUserAvatar(w http.ResponseWriter, r *http.Request) {
 
-	var avatarInput app_user.AvatarChooseInput
+	var avatarInput domain_user.AvatarChooseInput
 
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()

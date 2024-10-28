@@ -16,7 +16,7 @@ func NewGormUserRepository(db *gorm.DB) domain_user.UserDomainRepository {
 
 func (repo *GormUserRepository) GetByID(id uint64) (domain_user.User, error) {
 	var user domain_user.User
-	if err := repo.DB.Where(domain_user.User{ID: id}).Find(&user).Error; err != nil {
+	if err := repo.DB.Where(domain_user.User{ID: id}).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return user, database_errors.ErrRecordNotFound
 		}
@@ -51,6 +51,19 @@ func (repo *GormUserRepository) Create(user *domain_user.User) error {
 func (repo *GormUserRepository) Update(user domain_user.User) error {
 
 	if err := repo.DB.Updates(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return database_errors.ErrRecordNotFound
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (repo *GormUserRepository) UpdateColumns(user domain_user.User) error {
+
+	if err := repo.DB.UpdateColumns(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return database_errors.ErrRecordNotFound
 		}

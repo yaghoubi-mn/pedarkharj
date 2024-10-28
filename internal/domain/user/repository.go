@@ -5,5 +5,6 @@ type UserDomainRepository interface {
 	GetByNumber(number string) (User, error)
 	Create(user *User) error
 	Update(user User) error
+	UpdateColumns(user User) error
 	Delete(id uint64) error
 }

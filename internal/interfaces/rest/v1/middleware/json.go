@@ -38,11 +38,11 @@ func (j *jsonMiddleware) EnsureApplicationJson(next http.Handler) http.Handler {
 func (j *jsonMiddleware) AddCORSHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" || r.Method == "GET" || r.Method == "PUT" || r.Method == "DELETE" {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, DELETE, PUT")
-		w.Header().Set("Access-Control-Allow-Headers", "content-type, access-control-allow-origin, accept, user-agent, authorization")
-		w.Header().Set("Access-Control-Allow-Max-Age", "86400")
-		next.ServeHTTP(w, r)
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, DELETE, PUT")
+			w.Header().Set("Access-Control-Allow-Headers", "content-type, access-control-allow-origin, accept, user-agent, authorization")
+			w.Header().Set("Access-Control-Allow-Max-Age", "86400")
+			next.ServeHTTP(w, r)
 		}
 	})
 }
