@@ -2,6 +2,7 @@ package user_test
 
 import (
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -12,8 +13,20 @@ import (
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
 )
 
+var userService domain_user.UserDomainService
+
+func setup() {
+	userService = domain_user.NewUserService(validator.NewValidator())
+
+}
+
+func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	os.Exit(code)
+}
+
 func TestVerifyNumber(t *testing.T) {
-	userService := domain_user.NewUserService(validator.NewValidator())
 
 	tests := []struct {
 		name      string
@@ -75,7 +88,6 @@ func TestVerifyNumber(t *testing.T) {
 }
 
 func TestSignup(t *testing.T) {
-	userService := domain_user.NewUserService(validator.NewValidator())
 
 	tests := []struct {
 		user    domain_user.User
@@ -102,17 +114,17 @@ func TestSignup(t *testing.T) {
 		},
 		{
 			user: domain_user.User{
-				Name:     "long long long long long name",
+				Name:     "long long long long long long name",
 				Number:   "+989123456789",
 				Password: "12345678",
 			},
 			token:   uuid.NewString(),
-			wantErr: service_errors.ErrLongName,
+			wantErr: service_errors.ErrInvalidName,
 		},
 		{ // small name
 			user: domain_user.User{
 				Name:     "a",
-				Number:   "+98123456789",
+				Number:   "+989123456789",
 				Password: "12345678",
 			},
 			token:   uuid.NewString(),
@@ -131,7 +143,7 @@ func TestSignup(t *testing.T) {
 			user: domain_user.User{
 				Name:     "long password",
 				Number:   "+989123456789",
-				Password: "12345678901234567",
+				Password: "12345678901234567890012345678901",
 			},
 			token:   uuid.NewString(),
 			wantErr: service_errors.ErrLongPassword,
@@ -157,18 +169,92 @@ func TestSignup(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		userErr, serverErr := userService.Signup(&tt.user, tt.token)
+		user := tt.user
+		userErr, serverErr := userService.Signup(&user, tt.token)
 		assert.NoError(t, serverErr, tt)
 
 		assert.Equal(t, tt.wantErr, userErr, tt)
 
 		if userErr == nil {
 
-			assert.Equal(t, true, tt.user.IsRegistered, tt)
+			assert.Equal(t, true, user.IsRegistered, "isRegistered must be true", tt)
 			now := time.Now()
-			if now.Unix()-tt.user.RegisteredAt.Unix() < 10 {
-				assert.Error(t, errors.New("invalid RegisteredAt"), "actual:", tt.user.RegisteredAt)
+			if now.Unix()-user.RegisteredAt.Unix() < 10 {
+				assert.Error(t, errors.New("invalid RegisteredAt"), "actual:", user.RegisteredAt)
 			}
 		}
+	}
+}
+
+func TestResetPassword(t *testing.T) {
+
+	tests := []struct {
+		ID       int
+		Number   string
+		Password string
+		Token    string
+		WantErr  error
+	}{
+		{ // test success
+			ID:       1,
+			Number:   "+989123456789",
+			Password: "12345678",
+			Token:    uuid.NewString(),
+			WantErr:  nil,
+		},
+		{ // test invalid number
+			ID:       2,
+			Number:   "+98123456789",
+			Password: "12345678",
+			Token:    uuid.NewString(),
+			WantErr:  service_errors.ErrInvalidNumber,
+		},
+		{ // invalid number
+			ID:       3,
+			Number:   "09123456789",
+			Password: "12345678",
+			Token:    uuid.NewString(),
+			WantErr:  service_errors.ErrInvalidNumber,
+		},
+		{ // small password
+			ID:       4,
+			Number:   "+989123456789",
+			Password: "1234",
+			Token:    uuid.NewString(),
+			WantErr:  service_errors.ErrSmallPassword,
+		},
+		{
+			ID:       5,
+			Number:   "+989123456789",
+			Password: "1234567890123456789012345678900",
+			Token:    uuid.NewString(),
+			WantErr:  service_errors.ErrLongPassword,
+		},
+		{ // invalid token
+			ID:       6,
+			Number:   "+989123456789",
+			Password: "12345678",
+			Token:    "121",
+			WantErr:  service_errors.ErrInvalidToken,
+		},
+		{ // invalid token
+			ID:       6,
+			Number:   "+989123456789",
+			Password: "12345678",
+			Token:    "",
+			WantErr:  service_errors.ErrInvalidToken,
+		},
+	}
+
+	for _, tt := range tests {
+		userErr, serverErr, salt, outPassword := userService.ResetPassword(tt.Number, tt.Password, tt.Token)
+
+		assert.NoError(t, serverErr, tt)
+
+		assert.Equal(t, tt.WantErr, userErr, tt)
+
+		assert.NotEqual(t, 0, len(salt), tt)
+		assert.NotEqual(t, 0, len(outPassword), tt)
+
 	}
 }
