@@ -33,6 +33,7 @@ func NewHandler(appService app_user.UserAppService, response datatypes.Response)
 // @Param number body string true "phone number" example(+98123456789)
 // @Param otp body int true "OTP code" example(12345)
 // @Param token body string true "Token"
+// @Param mode body string true "verify mode" example("signup" or "reset_password")
 // @Success 200 "Ok. code: code_sent_to_number"
 // @Success 303 "Ok. code: go_signup. verify number done. user must signup"
 // @Failure 500

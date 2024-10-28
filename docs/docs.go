@@ -420,6 +420,16 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "example": "\"signup\" or \"reset_password\"",
+                        "description": "verify mode",
+                        "name": "mode",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {

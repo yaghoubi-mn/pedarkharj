@@ -270,6 +270,13 @@ paths:
         required: true
         schema:
           type: string
+      - description: verify mode
+        example: '"signup" or "reset_password"'
+        in: body
+        name: mode
+        required: true
+        schema:
+          type: string
       produces:
       - application/json
       responses:
