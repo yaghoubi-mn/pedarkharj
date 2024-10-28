@@ -3,6 +3,7 @@ package user
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
@@ -43,6 +44,8 @@ func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	decoder.Decode(&verifyNumberInput)
+
+	fmt.Printf("\n%+v\n", verifyNumberInput)
 
 	defer r.Body.Close()
 
