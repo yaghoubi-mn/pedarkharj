@@ -258,3 +258,7 @@ func TestResetPassword(t *testing.T) {
 
 	}
 }
+
+func TestCheckNumber(t *testing.T) {
+
+}

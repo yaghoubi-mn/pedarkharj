@@ -15,4 +15,5 @@ var (
 	ErrSmallName           = errors.New("name: small name")
 	ErrWrongPassword       = errors.New("password: wrong password")
 	ErrUserNotRegistered   = errors.New("user not registered")
+	ErrInvalidMode         = errors.New("mode: invalid mode")
 )

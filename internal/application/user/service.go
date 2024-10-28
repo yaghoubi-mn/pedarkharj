@@ -25,15 +25,15 @@ import (
 )
 
 type UserAppService interface {
-	VerifyNumber(verifyNumberInput domain_user.VerifyNumberInput, deviceName string, deviceIP string) (step int, responseDTO datatypes.ResponseDTO)
-	Signup(userInput domain_user.SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
-	GetUserInfo(user domain_user.User) datatypes.ResponseDTO
-	CheckNumber(numberInput domain_user.NumberInput) datatypes.ResponseDTO
-	Login(loginInput domain_user.LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
+	VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (step int, responseDTO datatypes.ResponseDTO)
+	Signup(userInput SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
+	GetUserInfo(userID uint64) datatypes.ResponseDTO
+	CheckNumber(numberInput NumberInput) datatypes.ResponseDTO
+	Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
 	GetAccessFromRefresh(refresh string) (responseDTO datatypes.ResponseDTO)
 	ChooseUserAvatar(avatarName string, userID uint64) datatypes.ResponseDTO
 	GetAvatars() datatypes.ResponseDTO
-	ResetPassword(input domain_user.RestPasswordWithNumberInput) datatypes.ResponseDTO
+	ResetPassword(input RestPasswordInput) datatypes.ResponseDTO
 }
 
 type service struct {
@@ -52,14 +52,19 @@ func NewUserService(repo domain_user.UserDomainRepository, cacheRepo datatypes.C
 	}
 }
 
-func (s *service) VerifyNumber(verifyNumberInput domain_user.VerifyNumberInput, deviceName string, deviceIP string) (int, datatypes.ResponseDTO) {
+func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (int, datatypes.ResponseDTO) {
 
 	var responseDTO datatypes.ResponseDTO
 	responseDTO.Data = make(map[string]any)
 
 	// isBlocked will checked in step 2
 
-	userErr, serverErr := s.domainService.VerifyNumber(verifyNumberInput.Number, verifyNumberInput.OTP, verifyNumberInput.Token, false)
+	userErr, serverErr := s.domainService.VerifyNumber(domain_user.VerifyNumberInput{
+		Number: verifyNumberInput.Number,
+		OTP:    verifyNumberInput.OTP,
+		Token:  verifyNumberInput.Token,
+		Mode:   verifyNumberInput.Mode,
+	})
 	if serverErr != nil {
 		responseDTO.ServerErr = serverErr
 		return 0, responseDTO
@@ -182,12 +187,6 @@ func (s *service) VerifyNumber(verifyNumberInput domain_user.VerifyNumberInput, 
 		// check otp
 		if otp == strconv.Itoa(int(verifyNumberInput.OTP)) {
 
-			otpInt, err2 := strconv.Atoi(otp)
-			if err2 != nil {
-				responseDTO.ServerErr = err2
-				return 0, responseDTO
-			}
-
 			// get user
 			user, databaseErr := s.repo.GetByNumber(verifyNumberInput.Number)
 
@@ -250,11 +249,9 @@ func (s *service) VerifyNumber(verifyNumberInput domain_user.VerifyNumberInput, 
 					return 0, responseDTO
 				}
 
-				// call domain service
-				userErr, serverErr = s.domainService.VerifyNumber(user.Number, uint(otpInt), token, user.IsBlocked)
-				responseDTO.ServerErr = serverErr
-				responseDTO.UserErr = userErr
-				if serverErr != nil || userErr != nil {
+				// check is blocked
+				if user.IsBlocked {
+					responseDTO.UserErr = errors.New("you are blocked")
 					return 0, responseDTO
 				}
 
@@ -287,16 +284,17 @@ func (s *service) VerifyNumber(verifyNumberInput domain_user.VerifyNumberInput, 
 	}
 }
 
-func (s *service) Signup(userInput domain_user.SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
+func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
 
 	responseDTO.Data = make(map[string]any)
 
-	var user domain_user.User
-	user.Number = userInput.Number
-	user.Name = userInput.Name
-	user.Password = userInput.Password
-
-	userErr, serverErr := s.domainService.Signup(&user, userInput.Token)
+	// call domain service
+	user, userErr, serverErr := s.domainService.Signup(domain_user.SignupUserInput{
+		Number:   userInput.Number,
+		Name:     userInput.Name,
+		Password: userInput.Password,
+		Token:    userInput.Token,
+	})
 
 	if serverErr != nil {
 		responseDTO.ServerErr = serverErr
@@ -408,10 +406,14 @@ func (s *service) Signup(userInput domain_user.SignupUserInput, deviceName strin
 	return responseDTO
 }
 
-func (s *service) ResetPassword(input domain_user.RestPasswordWithNumberInput) (responseDTO datatypes.ResponseDTO) {
+func (s *service) ResetPassword(input RestPasswordInput) (responseDTO datatypes.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
-	userErr, serverErr, salt, hashedPassword := s.domainService.ResetPassword(input.Number, input.Password, input.Token)
+	userErr, serverErr, salt, hashedPassword := s.domainService.ResetPassword(domain_user.RestPasswordInput{
+		Number:   input.Number,
+		Password: input.Password,
+		Token:    input.Token,
+	})
 	if serverErr != nil {
 		responseDTO.ServerErr = serverErr
 		return
@@ -480,12 +482,12 @@ func (s *service) ResetPassword(input domain_user.RestPasswordWithNumberInput) (
 
 }
 
-func (s *service) GetUserInfo(user domain_user.User) (responseDTO datatypes.ResponseDTO) {
+func (s *service) GetUserInfo(userID uint64) (responseDTO datatypes.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
-	var userOutput domain_user.UserOutput
+	var userOutput UserOutput
 	// get user from database for full information
-	user, err := s.repo.GetByID(user.ID)
+	user, err := s.repo.GetByID(userID)
 	if err != nil {
 		responseDTO.ServerErr = err
 		return
@@ -496,7 +498,7 @@ func (s *service) GetUserInfo(user domain_user.User) (responseDTO datatypes.Resp
 	return responseDTO
 }
 
-func (s *service) CheckNumber(numberInput domain_user.NumberInput) (responseDTO datatypes.ResponseDTO) {
+func (s *service) CheckNumber(numberInput NumberInput) (responseDTO datatypes.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	err := s.domainService.CheckNumber(numberInput.Number)
@@ -530,7 +532,7 @@ func (s *service) CheckNumber(numberInput domain_user.NumberInput) (responseDTO 
 
 }
 
-func (s *service) Login(loginInput domain_user.LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
+func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	if err := s.domainService.CheckNumber(loginInput.Number); err != nil {
@@ -550,7 +552,14 @@ func (s *service) Login(loginInput domain_user.LoginUserInput, deviceName string
 		return responseDTO
 	}
 
-	userErr, serverErr := s.domainService.Login(user, loginInput.Password)
+	userErr, serverErr := s.domainService.Login(domain_user.LoginUserInput{
+		Number:        loginInput.Number,
+		InputPassword: loginInput.Password,
+		RealPassword:  user.Password,
+		Salt:          user.Salt,
+		IsBlocked:     user.IsBlocked,
+		IsRegistered:  user.IsRegistered,
+	})
 	if serverErr != nil {
 		responseDTO.ServerErr = serverErr
 		return responseDTO

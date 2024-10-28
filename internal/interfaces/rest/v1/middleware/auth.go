@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
+	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
@@ -39,7 +39,7 @@ func (a *authMiddleware) EnsureAuthentication(next http.Handler) http.Handler {
 
 		access = access[7:]
 
-		var user domain_user.User
+		var user app_user.JWTUser
 		var err error
 		user.ID, user.Name, user.Number, user.IsRegistered, err = jwt.GetUserFromAccess(access)
 		if err != nil {

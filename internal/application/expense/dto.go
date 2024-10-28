@@ -1,14 +1,6 @@
-package domain_expense
+package app_expense
 
 import "time"
-
-type ExpenseInput struct {
-	Name        string
-	Description string
-	Creditors   map[string]uint64 // {"<ID>": <Amount>, ...}
-	Debtors     []uint64          // list if debtors IDs
-
-}
 
 type ExpenseDebtOuput struct {
 	// expense
@@ -35,4 +27,12 @@ type ExpenseDebtOuput struct {
 	// user
 	UserAvatar string `json:"user_avatar"`
 	UserName   string `json:"user_name"`
+}
+
+type ExpenseInput struct {
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Creditors   map[string]uint64 `json:"creditors"` // {"<ID>": <Amount>, ...}
+	Debtors     []uint64          `json:"debtors"`   // list if debtors IDs
+
 }

@@ -1,50 +1,51 @@
 package domain_user
 
 type VerifyNumberInput struct {
-	Number string `json:"number" validate:"required,e164"`
-	OTP    uint   `json:"otp"`
-	Token  string `json:"token" validate:"uuid,omitempty"` // temporary token
-	Mode   string `json:"mode"`                            // signup or reset password
+	Number string `validate:"required,phone_number"`
+	OTP    uint
+	Token  string `validate:"uuid,omitempty"` // temporary token
+	Mode   string // signup or reset password
 }
 
 type NumberInput struct {
-	Number string `json:"number"`
+	Number string
 }
 
 type SignupUserInput struct {
-	Number   string `json:"number" validate:"required,e164"` // TODO: size 13
-	Name     string `json:"name" validate:"required,name"`
-	Password string `json:"password" validate:"required"`
-	Token    string `json:"token" validate:"required,uuid"`
+	Number   string `validate:"required,phone_number"` // TODO: size 13
+	Name     string `validate:"required,name"`
+	Password string `validate:"required"`
+	Token    string `validate:"required,uuid"`
 }
 
 type LoginUserInput struct {
-	Number   string `json:"number" validator:"required,e164"`
-	Password string `json:"password" validator:"size:20"`
+	Number        string `validator:"required,phone_number"`
+	InputPassword string `validator:"size:20"`
+
+	RealPassword string // password that stored in database
+	Salt         string
+	IsBlocked    bool
+	IsRegistered bool
 }
 
 type RefreshInput struct {
-	Refresh string `json:"refresh"`
+	Refresh string
 }
 
 type AvatarChooseInput struct {
-	Avatar string `json:"avatar"`
+	Avatar string
 }
 
-type RestPasswordWithNumberInput struct {
-	Number   string `json:"number"`
-	Password string `json:"password"`
-	Token    string `json:"token"`
+type RestPasswordInput struct {
+	Number   string
+	Password string
+	Token    string
 }
 
-type UserOutput struct {
-	Name   string `json:"name"`
-	Number string `json:"number"` // number must be fill from user contact for security. user contact may be empty for adding unknown user to user contact
-	Avatar string `json:"avatar"`
-}
-
-func (u *UserOutput) Fill(user User) {
-	u.Name = user.Name
-	u.Number = user.Number
-	u.Avatar = user.Avatar
+func (v SignupUserInput) GetUser() User {
+	return User{
+		Number:   v.Number,
+		Name:     v.Name,
+		Password: v.Password,
+	}
 }
