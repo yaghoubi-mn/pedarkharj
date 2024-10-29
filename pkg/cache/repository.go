@@ -59,21 +59,21 @@ func (g GormCacheRepository) DeleteExpiredRecords() {
 	}
 }
 
-func (g GormCacheRepository) Get(key string) (string, error) {
+func (g GormCacheRepository) Get(key string) (string, time.Time, error) {
 	var c CacheTable
 	if err := g.DB.First(&c, CacheTable{Key: key}).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return "", database_errors.ErrRecordNotFound
+			return "", c.Expire, database_errors.ErrRecordNotFound
 		}
-		return "", err
+		return "", c.Expire, err
 	}
 
 	// check expire
 	if c.Expire.Sub(time.Now()).Seconds() < 0 {
-		return "", database_errors.ErrExpired
+		return "", c.Expire, database_errors.ErrExpired
 	}
 
-	return c.Value, nil
+	return c.Value, c.Expire, nil
 }
 
 func (g GormCacheRepository) Delete(key string) error {

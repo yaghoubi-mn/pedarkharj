@@ -28,12 +28,12 @@ func (a *authMiddleware) EnsureAuthentication(next http.Handler) http.Handler {
 
 		access := r.Header.Get("Authorization")
 		if access == "" {
-			a.response.ErrorResponse(w, 401, rcodes.Unauthenticated, errors.New("authentication is required"))
+			a.response.ErrorResponse(w, 401, rcodes.Unauthenticated, nil, errors.New("authentication is required"))
 			return
 		}
 
 		if strings.Index(access, "Bearer ") != 0 || len(access) < 8 {
-			a.response.ErrorResponse(w, 400, rcodes.InvalidHeader, errors.New("invalid Authorization header format"))
+			a.response.ErrorResponse(w, 400, rcodes.InvalidHeader, nil, errors.New("invalid Authorization header format"))
 			return
 		}
 
@@ -44,7 +44,7 @@ func (a *authMiddleware) EnsureAuthentication(next http.Handler) http.Handler {
 		user.ID, user.Name, user.Number, user.IsRegistered, err = jwt.GetUserFromAccess(access)
 		if err != nil {
 			fmt.Println("JWT ERROR:", err)
-			a.response.ErrorResponse(w, 401, rcodes.InvalidToken, errors.New("authorization: invalid token"))
+			a.response.ErrorResponse(w, 401, rcodes.InvalidToken, nil, errors.New("authorization: invalid token"))
 			return
 		}
 

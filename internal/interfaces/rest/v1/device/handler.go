@@ -44,18 +44,14 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ressponseDTO := h.appService.Logout(user.ID, utils.GetUserAgent(r))
+	responseDTO := h.appService.Logout(user.ID, utils.GetUserAgent(r))
 
-	if ressponseDTO.ServerErr != nil {
-		h.response.ServerErrorResponse(w, ressponseDTO.ServerErr)
-		return
-	}
-	if ressponseDTO.UserErr != nil {
-		h.response.ErrorResponse(w, 400, ressponseDTO.ResponseCode, ressponseDTO.UserErr)
+	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
+		h.response.DTOErrorResponse(w, responseDTO)
 		return
 	}
 
-	h.response.Response(w, 200, ressponseDTO.ResponseCode, ressponseDTO.Data)
+	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
 
 // LogoutAllUserDevices godoc
@@ -82,7 +78,7 @@ func (h *Handler) LogoutAllUserDevices(w http.ResponseWriter, r *http.Request) {
 
 	responseDTO := h.appService.LogoutAllUserDevices(user.ID)
 	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
-		h.response.DTOResponse(w, responseDTO)
+		h.response.DTOErrorResponse(w, responseDTO)
 	}
 
 	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)

@@ -25,7 +25,7 @@ func (j *jsonMiddleware) EnsureApplicationJson(next http.Handler) http.Handler {
 
 			// return
 			if r.Header.Get("Content-Type") != "application/json" {
-				j.response.ErrorResponse(w, 400, rcodes.InvalidHeader, errors.New("header application/json is required"))
+				j.response.ErrorResponse(w, 400, rcodes.InvalidHeader, nil, errors.New("header application/json is required"))
 				return
 			}
 		}

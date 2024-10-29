@@ -53,13 +53,8 @@ func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
 	userIP := utils.GetIPAddress(r)
 
 	step, responseDTO := h.appService.VerifyNumber(verifyNumberInput, userAgent, userIP)
-	if responseDTO.ServerErr != nil {
-		h.response.ServerErrorResponse(w, responseDTO.ServerErr)
-		return
-	}
-
-	if responseDTO.UserErr != nil {
-		h.response.ErrorResponse(w, http.StatusBadRequest, responseDTO.ResponseCode, responseDTO.UserErr)
+	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
+		h.response.DTOErrorResponse(w, responseDTO)
 		return
 	}
 
@@ -115,15 +110,9 @@ func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
 	userIP := utils.GetIPAddress(r)
 
 	responseDTO := h.appService.Signup(userInput, userAgent, userIP)
-	if responseDTO.ServerErr != nil {
-		h.response.ServerErrorResponse(w, responseDTO.ServerErr)
+	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
+		h.response.DTOErrorResponse(w, responseDTO)
 		return
-	}
-
-	if responseDTO.UserErr != nil {
-		h.response.ErrorResponse(w, http.StatusBadRequest, responseDTO.ResponseCode, responseDTO.UserErr)
-		return
-
 	}
 
 	h.response.Response(w, 200, "", responseDTO.Data)
@@ -149,12 +138,8 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	decoder.Decode(&userInput)
 
 	responseDTO := h.appService.Login(userInput, utils.GetUserAgent(r), utils.GetIPAddress(r))
-	if responseDTO.ServerErr != nil {
-		h.response.ServerErrorResponse(w, responseDTO.ServerErr)
-		return
-	}
-	if responseDTO.UserErr != nil {
-		h.response.ErrorResponse(w, 400, responseDTO.ResponseCode, responseDTO.UserErr)
+	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
+		h.response.DTOErrorResponse(w, responseDTO)
 		return
 	}
 
@@ -183,7 +168,7 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	responseDTO := h.appService.ResetPassword(input)
 	if responseDTO.UserErr != nil || responseDTO.ServerErr != nil {
-		h.response.DTOResponse(w, responseDTO)
+		h.response.DTOErrorResponse(w, responseDTO)
 		return
 	}
 
@@ -235,13 +220,8 @@ func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&numberInput)
 
 	responseDTO := h.appService.CheckNumber(numberInput)
-
-	if responseDTO.ServerErr != nil {
-		h.response.ServerErrorResponse(w, responseDTO.ServerErr)
-		return
-	}
-	if responseDTO.UserErr != nil {
-		h.response.ErrorResponse(w, 400, responseDTO.ResponseCode, responseDTO.UserErr)
+	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
+		h.response.DTOErrorResponse(w, responseDTO)
 		return
 	}
 
@@ -265,12 +245,8 @@ func (h *Handler) GetAccessFromRefresh(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&refreshInput)
 
 	responseDTO := h.appService.GetAccessFromRefresh(refreshInput.Refresh)
-	if responseDTO.ServerErr != nil {
-		h.response.ServerErrorResponse(w, responseDTO.ServerErr)
-		return
-	}
-	if responseDTO.UserErr != nil {
-		h.response.ErrorResponse(w, 400, responseDTO.ResponseCode, responseDTO.UserErr)
+	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
+		h.response.DTOErrorResponse(w, responseDTO)
 		return
 	}
 
@@ -309,7 +285,7 @@ func (h *Handler) ChooseUserAvatar(w http.ResponseWriter, r *http.Request) {
 
 	responseDTO := h.appService.ChooseUserAvatar(avatarInput.Avatar, user.ID)
 	if responseDTO.UserErr != nil || responseDTO.ServerErr != nil {
-		h.response.DTOResponse(w, responseDTO)
+		h.response.DTOErrorResponse(w, responseDTO)
 		return
 	}
 
@@ -328,7 +304,7 @@ func (h *Handler) GetAvatars(w http.ResponseWriter, r *http.Request) {
 
 	responseDTO := h.appService.GetAvatars()
 	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
-		h.response.DTOResponse(w, responseDTO)
+		h.response.DTOErrorResponse(w, responseDTO)
 		return
 	}
 

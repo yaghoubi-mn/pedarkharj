@@ -38,13 +38,16 @@ func (j *jsonResponse) StructResponse(w http.ResponseWriter, status int, code st
 }
 
 // errs example: "name: invalid name"
-func (j *jsonResponse) ErrorResponse(w http.ResponseWriter, status int, code string, errs ...error) {
+func (j *jsonResponse) ErrorResponse(w http.ResponseWriter, status int, code string, data datatypes.Map, errs ...error) {
 	if errs == nil {
 		slog.Error("err is required in JSONErrorResponse")
 	}
 
-	outData := make(datatypes.Map)
-	outData["errors"] = datatypes.Map{}
+	if data == nil {
+		data = make(datatypes.Map)
+	}
+
+	data["errors"] = datatypes.Map{}
 
 	temp := make(map[string]string)
 
@@ -57,9 +60,9 @@ func (j *jsonResponse) ErrorResponse(w http.ResponseWriter, status int, code str
 		}
 	}
 
-	outData["errors"] = interface{}(temp)
+	data["errors"] = interface{}(temp)
 
-	j.Response(w, status, code, outData)
+	j.Response(w, status, code, data)
 
 }
 
@@ -69,12 +72,12 @@ func (j *jsonResponse) ServerErrorResponse(w http.ResponseWriter, err error) {
 }
 
 // check ServerErr and UserErr
-func (j *jsonResponse) DTOResponse(w http.ResponseWriter, responseDTO datatypes.ResponseDTO) {
+func (j *jsonResponse) DTOErrorResponse(w http.ResponseWriter, responseDTO datatypes.ResponseDTO) {
 
 	if responseDTO.ServerErr != nil {
 		j.ServerErrorResponse(w, responseDTO.ServerErr)
 	} else if responseDTO.UserErr != nil {
-		j.ErrorResponse(w, 400, responseDTO.ResponseCode, responseDTO.UserErr)
+		j.ErrorResponse(w, 400, responseDTO.ResponseCode, responseDTO.Data, responseDTO.UserErr)
 	}
 
 }

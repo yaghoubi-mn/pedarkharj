@@ -283,4 +283,37 @@ func TestResetPassword(t *testing.T) {
 
 func TestCheckNumber(t *testing.T) {
 
+	tests := []struct {
+		Number  string
+		WantErr error
+	}{
+		{ // test success
+			Number:  "+989123456789",
+			WantErr: nil,
+		},
+		{ // test
+			Number:  "+989123456789",
+			WantErr: nil,
+		},
+		{ // test success
+			Number:  "+989123456789",
+			WantErr: nil,
+		},
+		{ // test success
+			Number:  "+989123456789",
+			WantErr: nil,
+		},
+		{ // test success
+			Number:  "+989123456789",
+			WantErr: nil,
+		},
+		{ // test success
+			Number:  "+989123456789",
+			WantErr: nil,
+		},
+		{ // test success
+			Number:  "+989123456789",
+			WantErr: nil,
+		},
+	}
 }

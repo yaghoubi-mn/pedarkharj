@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
@@ -78,7 +79,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 		// step 1: sent otp code to number
 
 		// check for number delay
-		_, err := s.cacheRepo.Get(verifyNumberInput.Number)
+		_, expireTime, err := s.cacheRepo.Get(verifyNumberInput.Number)
 
 		if err != nil {
 			if err == database_errors.ErrExpired || err == database_errors.ErrRecordNotFound {
@@ -129,11 +130,12 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 		responseDTO.ResponseCode = rcodes.NumberDelay
 		responseDTO.UserErr = errors.New("number: otp not expired. wait some minutes")
 		responseDTO.ServerErr = err
+		responseDTO.Data["expireTimeSeconds"] = expireTime.Sub(time.Now()).Seconds()
 		return 1, responseDTO
 
 	} else {
 		// step 2: check otp code
-		verifyInfoString, err := s.cacheRepo.Get(verifyNumberInput.Number)
+		verifyInfoString, _, err := s.cacheRepo.Get(verifyNumberInput.Number)
 
 		if err != nil {
 			if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
@@ -302,7 +304,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		return responseDTO
 	}
 
-	verifyInfoString, err := s.cacheRepo.Get(userInput.Number)
+	verifyInfoString, _, err := s.cacheRepo.Get(userInput.Number)
 	if err != nil {
 		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
 
@@ -419,7 +421,7 @@ func (s *service) ResetPassword(input RestPasswordInput) (responseDTO datatypes.
 		return
 	}
 
-	verifyInfoString, err := s.cacheRepo.Get(input.Number)
+	verifyInfoString, _, err := s.cacheRepo.Get(input.Number)
 	if err != nil {
 		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
 

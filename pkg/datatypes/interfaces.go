@@ -11,7 +11,7 @@ type Table interface {
 
 type CacheRepository interface {
 	Save(key string, value string, expireTime time.Duration) error
-	Get(key string) (string, error)
+	Get(key string) (string, time.Time, error)
 	Delete(key string) error
 }
 
@@ -23,7 +23,7 @@ type Validator interface {
 type Response interface {
 	Response(w http.ResponseWriter, status int, code string, mapData Map)
 	StructResponse(w http.ResponseWriter, status int, code string, data any)
-	ErrorResponse(w http.ResponseWriter, status int, code string, errs ...error)
+	ErrorResponse(w http.ResponseWriter, status int, code string, data Map, errs ...error)
 	ServerErrorResponse(w http.ResponseWriter, err error)
-	DTOResponse(w http.ResponseWriter, responseDTO ResponseDTO)
+	DTOErrorResponse(w http.ResponseWriter, responseDTO ResponseDTO)
 }
