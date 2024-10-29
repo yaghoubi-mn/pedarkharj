@@ -3,6 +3,7 @@ package app_user
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
 	"time"
@@ -117,6 +118,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 
 				responseDTO.ResponseCode = rcodes.CodeSendToNumber
 				responseDTO.Data["token"] = token.String()
+				responseDTO.Data["expireTimeSeconds"] = math.Round(config.VerifyNumberCacheExpireTimeForNumberDelay.Seconds())
 				return 1, responseDTO
 
 			} else {
@@ -130,7 +132,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 		responseDTO.ResponseCode = rcodes.NumberDelay
 		responseDTO.UserErr = errors.New("number: otp not expired. wait some minutes")
 		responseDTO.ServerErr = err
-		responseDTO.Data["expireTimeSeconds"] = time.Until(expireTime).Seconds()
+		responseDTO.Data["expireTimeSeconds"] = math.Round(time.Until(expireTime).Seconds())
 		return 1, responseDTO
 
 	} else {

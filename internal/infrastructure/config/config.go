@@ -19,13 +19,13 @@ var (
 	JWTAccessExpire  = 15 * time.Minute
 
 	VerifyNumberCacheExpireTimeForNumberDelay = 5 * time.Minute
-	VerifyNumberCacheExpireTime = 10 * time.Minute
+	VerifyNumberCacheExpireTime               = 10 * time.Minute
 )
 
 func init() {
 	if Debug {
 		BcryptCost = 1
 		JWTAccessExpire = 24 * time.Hour
-		VerifyNumberCacheExpireTimeForNumberDelay = 10 * time.Second
+		VerifyNumberCacheExpireTimeForNumberDelay = 25 * time.Second
 	}
 }
