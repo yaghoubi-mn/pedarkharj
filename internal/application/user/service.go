@@ -130,7 +130,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 		responseDTO.ResponseCode = rcodes.NumberDelay
 		responseDTO.UserErr = errors.New("number: otp not expired. wait some minutes")
 		responseDTO.ServerErr = err
-		responseDTO.Data["expireTimeSeconds"] = expireTime.Sub(time.Now()).Seconds()
+		responseDTO.Data["expireTimeSeconds"] = time.Until(expireTime).Seconds()
 		return 1, responseDTO
 
 	} else {
