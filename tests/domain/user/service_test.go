@@ -29,58 +29,71 @@ func TestMain(m *testing.M) {
 func TestVerifyNumber(t *testing.T) {
 
 	tests := []struct {
-		name      string
-		number    string
-		code      uint
-		token     string
-		isBlocked bool
-		mockErr   error
-		wantErr   error
+		name    string
+		number  string
+		code    uint
+		token   string
+		mode    string
+		mockErr error
+		wantErr error
 	}{
 		{
-			name:      "Success",
-			number:    "+989123456789",
-			code:      0,
-			token:     uuid.NewString(),
-			isBlocked: false,
-			wantErr:   nil,
+			name:    "Success",
+			number:  "+989123456789",
+			code:    0,
+			token:   uuid.NewString(),
+			mode:    "signup",
+			wantErr: nil,
 		},
 		{
-			name:      "Success",
-			number:    "+989123456789",
-			code:      12345,
-			token:     uuid.NewString(),
-			isBlocked: false,
-			wantErr:   nil,
+			name:    "Success",
+			number:  "+989123456789",
+			code:    12345,
+			token:   uuid.NewString(),
+			mode:    "signup",
+			wantErr: nil,
 		},
 		{
-			name:      "Success",
-			number:    "+989123456789",
-			code:      0,
-			token:     "",
-			isBlocked: false,
-			wantErr:   nil,
+			name:    "Success",
+			number:  "+989123456789",
+			code:    0,
+			token:   "",
+			mode:    "signup",
+			wantErr: nil,
 		},
 		{
-			name:      "Blocked user",
-			number:    "+989123456789",
-			code:      12345,
-			token:     uuid.NewString(),
-			isBlocked: true,
-			wantErr:   service_errors.ErrBlockedUser,
+			name:    "Blocked user",
+			number:  "+989123456789",
+			code:    12345,
+			token:   uuid.NewString(),
+			mode:    "signup",
+			wantErr: service_errors.ErrBlockedUser,
 		},
 		{
-			name:      "invalid number",
-			number:    "+9891234567893",
-			code:      0,
-			token:     uuid.NewString(),
-			isBlocked: false,
-			wantErr:   service_errors.ErrInvalidNumber,
+			name:    "invalid number",
+			number:  "+9891234567893",
+			code:    0,
+			token:   uuid.NewString(),
+			mode:    "signup",
+			wantErr: service_errors.ErrInvalidNumber,
+		},
+		{
+			name:    "invalid mode",
+			number:  "+989123456789",
+			code:    12345,
+			token:   uuid.NewString(),
+			mode:    "a",
+			wantErr: service_errors.ErrInvalidMode,
 		},
 	}
 
 	for _, tt := range tests {
-		userErr, serverErr := userService.VerifyNumber(tt.number, tt.code, tt.token, tt.isBlocked)
+		userErr, serverErr := userService.VerifyNumber(domain_user.VerifyNumberInput{
+			Number: tt.number,
+			OTP:    tt.code,
+			Token:  tt.token,
+			Mode:   tt.mode,
+		})
 		assert.NoError(t, serverErr, tt)
 
 		assert.Equal(t, tt.wantErr, userErr, tt)
@@ -169,8 +182,13 @@ func TestSignup(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		user := tt.user
-		userErr, serverErr := userService.Signup(&user, tt.token)
+
+		user, userErr, serverErr := userService.Signup(domain_user.SignupUserInput{
+			Number:   tt.user.Number,
+			Name:     tt.user.Name,
+			Password: tt.user.Password,
+			Token:    tt.token,
+		})
 		assert.NoError(t, serverErr, tt)
 
 		assert.Equal(t, tt.wantErr, userErr, tt)
@@ -247,7 +265,11 @@ func TestResetPassword(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		userErr, serverErr, salt, outPassword := userService.ResetPassword(tt.Number, tt.Password, tt.Token)
+		userErr, serverErr, salt, outPassword := userService.ResetPassword(domain_user.RestPasswordInput{
+			Number:   tt.Number,
+			Password: tt.Password,
+			Token:    tt.Token,
+		})
 
 		assert.NoError(t, serverErr, tt)
 

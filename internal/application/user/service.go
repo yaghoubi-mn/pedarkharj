@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
-	"time"
 
 	"github.com/google/uuid"
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
@@ -81,9 +80,6 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 		// check for number delay
 		_, err := s.cacheRepo.Get(verifyNumberInput.Number)
 
-		if config.Debug {
-			err = database_errors.ErrExpired
-		}
 		if err != nil {
 			if err == database_errors.ErrExpired || err == database_errors.ErrRecordNotFound {
 
@@ -111,7 +107,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 					return 0, responseDTO
 				}
 
-				err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, 10*time.Minute)
+				err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTimeForNumberDelay)
 				if err != nil {
 					responseDTO.ServerErr = err
 					return 0, responseDTO
@@ -230,7 +226,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 				}
 
 				// save number and token to cache for signup
-				err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTime)
+				err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTimeForNumberDelay)
 				if err != nil {
 					responseDTO.ServerErr = err
 					return 0, responseDTO
@@ -265,7 +261,7 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 					return 0, responseDTO
 				}
 
-				err := s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTime)
+				err := s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTimeForNumberDelay)
 				if err != nil {
 					responseDTO.ServerErr = err
 					return 0, responseDTO
