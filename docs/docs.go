@@ -314,6 +314,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/send-otp": {
+            "post": {
+                "description": "verify number with sms",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "parameters": [
+                    {
+                        "example": "+98123456789",
+                        "description": "phone number",
+                        "name": "number",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ok. code: code_sent_to_number"
+                    },
+                    "400": {
+                        "description": "BadRequest:\u003cbr\u003ecode=number_delay: Wait some minutes.\u003cbr\u003ecode=invalid_field: a field is invalid"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/users/signup": {
             "post": {
                 "description": "Signup user. User must be verify number first.",
@@ -379,7 +416,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/verify-number": {
+        "/users/verify-otp": {
             "post": {
                 "description": "verify number with sms",
                 "consumes": [

@@ -200,6 +200,31 @@ paths:
           description: Internal Server Error
       tags:
       - users
+  /users/send-otp:
+    post:
+      consumes:
+      - application/json
+      description: verify number with sms
+      parameters:
+      - description: phone number
+        example: "+98123456789"
+        in: body
+        name: number
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Ok. code: code_sent_to_number'
+        "400":
+          description: 'BadRequest:<br>code=number_delay: Wait some minutes.<br>code=invalid_field:
+            a field is invalid'
+        "500":
+          description: Internal Server Error
+      tags:
+      - users
   /users/signup:
     post:
       consumes:
@@ -244,7 +269,7 @@ paths:
           description: Internal Server Error
       tags:
       - users
-  /users/verify-number:
+  /users/verify-otp:
     post:
       consumes:
       - application/json
