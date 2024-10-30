@@ -54,7 +54,6 @@ func (h *Handler) SendOTP(w http.ResponseWriter, r *http.Request) {
 
 	responseDTO.Data["msg"] = "Code sent to number"
 	h.response.Response(w, http.StatusOK, responseDTO.ResponseCode, responseDTO.Data)
-	return
 
 }
 
@@ -68,8 +67,7 @@ func (h *Handler) SendOTP(w http.ResponseWriter, r *http.Request) {
 // @Param otp body int true "OTP code" example(12345)
 // @Param token body string true "Token"
 // @Param mode body string true "verify mode" example("signup" or "reset_password")
-// @Success 200 "Ok. code: code_sent_to_number"
-// @Success 303 "Ok. code: go_signup. verify number done. user must signup"
+// @Success 303 "Success<br>Ok. code: go_reset_password <br>Ok. code: go_signup. verify number done. user must signup"
 // @Failure 500
 // @Failure 400 "BadRequest:<br>code=go_send_otp_first: Must go to send-otp first.<br>code=wrong_otp: The OTP is wrong.<br>code=invalid_field: a field is invalid"
 // @Router /users/verify-otp [post]
@@ -101,7 +99,7 @@ func (h *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	// user sent otp code and otp is currect. user already exists in database
 	if mode == 2 {
 		responseDTO.Data["msg"] = "Go rest password"
-		h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
+		h.response.Response(w, 303, responseDTO.ResponseCode, responseDTO.Data)
 		return
 	}
 

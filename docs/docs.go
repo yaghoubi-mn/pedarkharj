@@ -470,11 +470,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "Ok. code: code_sent_to_number"
-                    },
                     "303": {
-                        "description": "Ok. code: go_signup. verify number done. user must signup"
+                        "description": "Success\u003cbr\u003eOk. code: go_reset_password \u003cbr\u003eOk. code: go_signup. verify number done. user must signup"
                     },
                     "400": {
                         "description": "BadRequest:\u003cbr\u003ecode=go_send_otp_first: Must go to send-otp first.\u003cbr\u003ecode=wrong_otp: The OTP is wrong.\u003cbr\u003ecode=invalid_field: a field is invalid"
