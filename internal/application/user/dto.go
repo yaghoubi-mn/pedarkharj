@@ -10,7 +10,11 @@ type JWTUser struct {
 	IsRegistered bool
 }
 
-type VerifyNumberInput struct {
+type SendOTPInput struct {
+	Number string `json:"number"`
+}
+
+type VerifyOTPInput struct {
 	Number string `json:"number" validate:"required,phone_number"`
 	OTP    uint   `json:"otp"`
 	Token  string `json:"token" validate:"uuid,omitempty"` // temporary token

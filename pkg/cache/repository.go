@@ -12,7 +12,7 @@ import (
 // database table
 type CacheTable struct {
 	ID     uint64
-	Key    string
+	Key    string `gorm:"unique"`
 	Value  string
 	Expire time.Time
 }
@@ -44,7 +44,7 @@ func (g GormCacheRepository) Save(key string, value string, expireTime time.Dura
 	}
 
 	// save to database
-	if err := g.DB.Create(&c).Error; err != nil {
+	if err := g.DB.Save(&c).Error; err != nil {
 		return err
 	}
 

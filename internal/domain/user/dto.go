@@ -1,6 +1,10 @@
 package domain_user
 
-type VerifyNumberInput struct {
+type SendOTPInput struct {
+	Number string `validate:"required,phone_number"`
+}
+
+type VerifyOTPInput struct {
 	Number string `validate:"required,phone_number"`
 	OTP    uint
 	Token  string `validate:"uuid,omitempty"` // temporary token

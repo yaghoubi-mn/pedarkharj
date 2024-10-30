@@ -3,7 +3,6 @@ package user
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
@@ -23,7 +22,43 @@ func NewHandler(appService app_user.UserAppService, response datatypes.Response)
 	}
 }
 
-// VerifyNumber godoc
+// SendOTP godoc
+// @Summery verify number
+// @Description verify number with sms
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param number body string true "phone number" example(+98123456789)
+// @Success 200 "Ok. code: code_sent_to_number"
+// @Failure 500
+// @Failure 400 "BadRequest:<br>code=number_delay: Wait some minutes.<br>code=invalid_field: a field is invalid"
+// @Router /users/send-otp [post]
+func (h *Handler) SendOTP(w http.ResponseWriter, r *http.Request) {
+
+	var input app_user.SendOTPInput
+	// decode body
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	decoder.Decode(&input)
+
+	defer r.Body.Close()
+
+	// userAgent := utils.GetUserAgent(r)
+	// userIP := utils.GetIPAddress(r)
+
+	responseDTO := h.appService.SendOTP(input) //, userAgent, userIP)
+	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
+		h.response.DTOErrorResponse(w, responseDTO)
+		return
+	}
+
+	responseDTO.Data["msg"] = "Code sent to number"
+	h.response.Response(w, http.StatusOK, responseDTO.ResponseCode, responseDTO.Data)
+	return
+
+}
+
+// VerifyOTP godoc
 // @Summery verify number
 // @Description verify number with sms
 // @Tags users
@@ -37,43 +72,34 @@ func NewHandler(appService app_user.UserAppService, response datatypes.Response)
 // @Success 303 "Ok. code: go_signup. verify number done. user must signup"
 // @Failure 500
 // @Failure 400 "BadRequest:<br>code=zero_code_first: Must zero the otp code first.<br>code=wrong_otp: The OTP is wrong.<br>code=number_delay: Wait some minutes.<br>code=invalid_field: a field is invalid"
-// @Router /users/verify-number [post]
-func (h *Handler) VerifyNumber(w http.ResponseWriter, r *http.Request) {
-	var verifyNumberInput app_user.VerifyNumberInput
+// @Router /users/verify-otp [post]
+func (h *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
+	var input app_user.VerifyOTPInput
 	// decode body
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
-	decoder.Decode(&verifyNumberInput)
-
-	fmt.Printf("\n%+v\n", verifyNumberInput)
+	decoder.Decode(&input)
 
 	defer r.Body.Close()
 
 	userAgent := utils.GetUserAgent(r)
 	userIP := utils.GetIPAddress(r)
 
-	step, responseDTO := h.appService.VerifyNumber(verifyNumberInput, userAgent, userIP)
+	mode, responseDTO := h.appService.VerifyOTP(input, userAgent, userIP)
 	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
 		h.response.DTOErrorResponse(w, responseDTO)
 		return
 	}
 
-	// otp code sent to number
-	if step == 1 {
-		responseDTO.Data["msg"] = "Code sent to number"
-		h.response.Response(w, http.StatusOK, responseDTO.ResponseCode, responseDTO.Data)
-		return
-	}
-
 	// user sent otp code and otp is currect
-	if step == 2 {
+	if mode == 1 {
 		responseDTO.Data["msg"] = "Number verified. Go signup"
 		h.response.Response(w, 303, responseDTO.ResponseCode, responseDTO.Data)
 		return
 	}
 
 	// user sent otp code and otp is currect. user already exists in database
-	if step == 3 {
+	if mode == 2 {
 		responseDTO.Data["msg"] = "Go rest password"
 		h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 		return

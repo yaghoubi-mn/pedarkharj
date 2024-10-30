@@ -16,7 +16,7 @@ const (
 	WrongOTP              = "wrong_otp"
 	GoSignup              = "go_signup"
 	OTPExpired            = "otp_expired"
-	ZeroCodeFirst         = "zero_code_first"
+	GoSendOTPFirst        = "go_send_otp_first"
 	NumberDelay           = "number_delay"
 	NumberNotExist        = "number_not_exist"
 	AvatarNotFound        = "avatar_not_found"

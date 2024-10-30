@@ -40,7 +40,8 @@ func NewRouter(userAppService app_user.UserAppService, deviceAppService app_devi
 
 	// #user routes
 	// authentication
-	registerRouteFunc(mux, "POST", "/users/verify-number", userHandler.VerifyNumber)
+	registerRouteFunc(mux, "POST", "/users/send-otp", userHandler.SendOTP)
+	registerRouteFunc(mux, "POST", "/users/verify-otp", userHandler.VerifyOTP)
 	registerRouteFunc(mux, "POST", "/users/signup", userHandler.SignupUser)
 	registerRouteFunc(mux, "POST", "/users/check-number", userHandler.CheckNumber)
 	registerRouteFunc(mux, "POST", "/users/login", userHandler.Login)

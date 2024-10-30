@@ -11,7 +11,8 @@ import (
 
 type UserDomainService interface {
 	Signup(input SignupUserInput) (user User, userError error, serverError error)
-	VerifyNumber(input VerifyNumberInput) (userError error, serverError error)
+	SendOTP(input SendOTPInput) (userErr error)
+	VerifyOTP(input VerifyOTPInput) (userError error, serverError error)
 	CheckNumber(number string) error
 	Login(input LoginUserInput) (userError, serverError error)
 	ResetPassword(input RestPasswordInput) (userErr, serverErr error, salt, outPassword string)
@@ -27,8 +28,16 @@ func NewUserService(validator datatypes.Validator) UserDomainService {
 	}
 }
 
-// step: int, code: string, token: string, errors: []error, err: error
-func (s *service) VerifyNumber(input VerifyNumberInput) (error, error) {
+func (s *service) SendOTP(input SendOTPInput) error {
+
+	if err := s.validator.ValidateFieldByFieldName("Number", input.Number, User{}); err != nil {
+		return service_errors.ErrInvalidNumber
+	}
+
+	return nil
+}
+
+func (s *service) VerifyOTP(input VerifyOTPInput) (error, error) {
 
 	// if input.IsBlocked {
 	// 	return service_errors.ErrBlockedUser, nil

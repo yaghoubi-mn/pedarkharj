@@ -26,7 +26,8 @@ import (
 )
 
 type UserAppService interface {
-	VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (step int, responseDTO datatypes.ResponseDTO)
+	SendOTP(input SendOTPInput) datatypes.ResponseDTO
+	VerifyOTP(input VerifyOTPInput, deviceName string, deviceIP string) (mode int, responseDTO datatypes.ResponseDTO)
 	Signup(userInput SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
 	GetUserInfo(userID uint64) datatypes.ResponseDTO
 	CheckNumber(numberInput NumberInput) datatypes.ResponseDTO
@@ -53,14 +54,86 @@ func NewUserService(repo domain_user.UserDomainRepository, cacheRepo datatypes.C
 	}
 }
 
-func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName string, deviceIP string) (int, datatypes.ResponseDTO) {
+// sent otp code to number
+func (s *service) SendOTP(input SendOTPInput) (responseDTO datatypes.ResponseDTO) {
 
-	var responseDTO datatypes.ResponseDTO
 	responseDTO.Data = make(map[string]any)
 
 	// isBlocked will checked in step 2
 
-	userErr, serverErr := s.domainService.VerifyNumber(domain_user.VerifyNumberInput{
+	userErr := s.domainService.SendOTP(domain_user.SendOTPInput{
+		Number: input.Number,
+	})
+	if userErr != nil {
+		responseDTO.UserErr = userErr
+		responseDTO.ResponseCode = rcodes.InvalidField
+		return responseDTO
+	}
+
+	_, expireTime, err := s.cacheRepo.Get(input.Number)
+
+	delayTime := expireTime.Add(config.VerifyNumberCacheExpireTimeForNumberDelay).Sub(time.Now().Add(config.VerifyNumberCacheExpireTime))
+	if err == database_errors.ErrExpired || err == database_errors.ErrRecordNotFound || delayTime.Seconds() <= 0 {
+
+		// generate random otp code between 10000 and 99999
+		otp := rand.Intn(90000) + 10000
+		token := uuid.New()
+
+		if config.Debug == false {
+
+			// send code to number
+			err = sms.SendOTPSMS(input.Number[3:], otp)
+			if err != nil {
+				responseDTO.ServerErr = err
+				return responseDTO
+			}
+		}
+
+		verifyInfo := make(map[string]string)
+		verifyInfo["token"] = token.String()
+		verifyInfo["otp"] = strconv.Itoa(otp)
+
+		verifyInfoString, err := utils.ConvertMapToString(verifyInfo)
+		if err != nil {
+			responseDTO.ServerErr = err
+			return responseDTO
+		}
+
+		err = s.cacheRepo.Save(input.Number, verifyInfoString, config.VerifyNumberCacheExpireTime)
+		if err != nil {
+			responseDTO.ServerErr = err
+			return responseDTO
+		}
+		fmt.Println("OTP: ", otp)
+
+		responseDTO.ResponseCode = rcodes.CodeSendToNumber
+		responseDTO.Data["token"] = token.String()
+		responseDTO.Data["delayTimeSeconds"] = math.Round(config.VerifyNumberCacheExpireTimeForNumberDelay.Seconds())
+		return responseDTO
+
+	} else if err != nil {
+		responseDTO.ServerErr = err
+		return responseDTO
+
+	}
+
+	// otp code sent and not expired
+
+	responseDTO.ResponseCode = rcodes.NumberDelay
+	responseDTO.UserErr = errors.New("number: otp not expired. wait some minutes")
+	responseDTO.ServerErr = err
+	responseDTO.Data["delayTimeSeconds"] = math.Round(delayTime.Seconds())
+	return responseDTO
+
+}
+
+// check otp code
+func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string, deviceIP string) (int, datatypes.ResponseDTO) {
+
+	var responseDTO datatypes.ResponseDTO
+	responseDTO.Data = make(map[string]any)
+
+	userErr, serverErr := s.domainService.VerifyOTP(domain_user.VerifyOTPInput{
 		Number: verifyNumberInput.Number,
 		OTP:    verifyNumberInput.OTP,
 		Token:  verifyNumberInput.Token,
@@ -76,50 +149,68 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 		return 0, responseDTO
 	}
 
-	if verifyNumberInput.OTP == 0 {
-		// step 1: sent otp code to number
+	verifyInfoString, _, err := s.cacheRepo.Get(verifyNumberInput.Number)
 
-		// check for number delay
-		_, expireTime, err := s.cacheRepo.Get(verifyNumberInput.Number)
+	if err != nil {
+		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
 
-		if err != nil {
-			if err == database_errors.ErrExpired || err == database_errors.ErrRecordNotFound {
+			responseDTO.ResponseCode = rcodes.GoSendOTPFirst
+			responseDTO.UserErr = errors.New("code: OTP wasn't sent. go send-otp first")
+			return 0, responseDTO
 
-				// generate random otp code between 10000 and 99999
-				otp := rand.Intn(90000) + 10000
-				token := uuid.New()
+		}
+		// else if err == database_errors.ErrExpired {
+		// 	errMap["code"] = "code expired"
+		// 	return 0, rcodes.OTPExpired, tokens, errMap, nil
+		// }
 
-				if config.Debug == false {
+		responseDTO.ServerErr = err
+		return 0, responseDTO
+	}
 
-					// send code to number
-					err = sms.SendOTPSMS(verifyNumberInput.Number[3:], otp)
-					if err != nil {
-						responseDTO.ServerErr = err
-						return 1, responseDTO
-					}
-				}
+	verifyInfo, err := utils.ConvertStringToMap(verifyInfoString)
+	if err != nil {
+		responseDTO.ServerErr = err
+		return 0, responseDTO
+	}
 
-				verifyInfo := make(map[string]string)
-				verifyInfo["token"] = token.String()
-				verifyInfo["otp"] = strconv.Itoa(otp)
+	// get token from verifyInfo
+	token, ok := verifyInfo["token"]
+	if !ok {
+		responseDTO.ServerErr = errors.New("cannot convert token to string")
+		return 0, responseDTO
+	}
 
-				verifyInfoString, err := utils.ConvertMapToString(verifyInfo)
-				if err != nil {
-					responseDTO.ServerErr = err
-					return 0, responseDTO
-				}
+	// check token
+	if token != verifyNumberInput.Token {
 
-				err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTimeForNumberDelay)
-				if err != nil {
-					responseDTO.ServerErr = err
-					return 0, responseDTO
-				}
-				fmt.Println("OTP: ", otp)
+		responseDTO.ResponseCode = rcodes.InvalidField
+		responseDTO.UserErr = errors.New("token: invalid token")
+		return 0, responseDTO
+	}
 
-				responseDTO.ResponseCode = rcodes.CodeSendToNumber
-				responseDTO.Data["token"] = token.String()
-				responseDTO.Data["delayTimeSeconds"] = math.Round(config.VerifyNumberCacheExpireTimeForNumberDelay.Seconds())
-				return 1, responseDTO
+	// get otp
+	otp, ok := verifyInfo["otp"]
+	if !ok {
+		responseDTO.ServerErr = errors.New("cannot convert otp to int")
+		return 0, responseDTO
+	}
+
+	// check otp
+	if otp == strconv.Itoa(int(verifyNumberInput.OTP)) {
+
+		// get user
+		user, databaseErr := s.repo.GetByNumber(verifyNumberInput.Number)
+
+		var isUserRegistered bool
+		isUserExist := true
+
+		isUserRegistered = user.IsRegistered
+
+		if databaseErr != nil {
+			if databaseErr == database_errors.ErrRecordNotFound {
+				isUserRegistered = false
+				isUserExist = false
 
 			} else {
 				responseDTO.ServerErr = err
@@ -127,161 +218,81 @@ func (s *service) VerifyNumber(verifyNumberInput VerifyNumberInput, deviceName s
 			}
 		}
 
-		// otp code sent and not expired
+		if !isUserRegistered {
+			// user not registered
 
-		responseDTO.ResponseCode = rcodes.NumberDelay
-		responseDTO.UserErr = errors.New("number: otp not expired. wait some minutes")
-		responseDTO.ServerErr = err
-		responseDTO.Data["delayTimeSeconds"] = math.Round(time.Until(expireTime).Seconds())
-		return 1, responseDTO
-
-	} else {
-		// step 2: check otp code
-		verifyInfoString, _, err := s.cacheRepo.Get(verifyNumberInput.Number)
-
-		if err != nil {
-			if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
-
-				responseDTO.ResponseCode = rcodes.ZeroCodeFirst
-				responseDTO.UserErr = errors.New("code: zero code in first step")
+			// becuase user not found only signup mode is allowed
+			if verifyNumberInput.Mode != "signup" {
+				responseDTO.ResponseCode = rcodes.UserNotRegistered
+				responseDTO.UserErr = errors.New("user not exist. reset_password not allowed")
 				return 0, responseDTO
-
 			}
-			// else if err == database_errors.ErrExpired {
-			// 	errMap["code"] = "code expired"
-			// 	return 0, rcodes.OTPExpired, tokens, errMap, nil
-			// }
 
-			responseDTO.ServerErr = err
-			return 0, responseDTO
-		}
+			// user not exist. redirect to signup
 
-		verifyInfo, err := utils.ConvertStringToMap(verifyInfoString)
-		if err != nil {
-			responseDTO.ServerErr = err
-			return 0, responseDTO
-		}
+			verifyInfo := make(map[string]string)
+			verifyInfo["token"] = token
+			verifyInfo["mode"] = "signup"
+			verifyInfo["is_user_exist"] = strconv.FormatBool(isUserExist)
 
-		// get token from verifyInfo
-		token, ok := verifyInfo["token"]
-		if !ok {
-			responseDTO.ServerErr = errors.New("cannot convert token to string")
-			return 0, responseDTO
-		}
+			verifyInfoString, err = utils.ConvertMapToString(verifyInfo)
+			if err != nil {
+				responseDTO.ServerErr = err
+				return 0, responseDTO
+			}
 
-		// check token
-		if token != verifyNumberInput.Token {
+			// save number and token to cache for signup
+			err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTimeForNumberDelay)
+			if err != nil {
+				responseDTO.ServerErr = err
+				return 0, responseDTO
+			}
 
-			responseDTO.ResponseCode = rcodes.InvalidField
-			responseDTO.UserErr = errors.New("token: invalid token")
+			responseDTO.ResponseCode = rcodes.GoSignup
+			return 1, responseDTO
+
+		} else {
+			// user registered
+
+			// user exist so just reset password allowed
+			if verifyNumberInput.Mode != "reset_password" {
+				responseDTO.ResponseCode = rcodes.UserAlreadyRegistered
+				responseDTO.UserErr = errors.New("user already exist. signup mode not allowed")
+				return 0, responseDTO
+			}
+
+			// check is blocked
+			if user.IsBlocked {
+				responseDTO.UserErr = errors.New("you are blocked")
+				return 0, responseDTO
+			}
+
+			verifyInfo := make(map[string]string)
+			verifyInfo["token"] = token
+			verifyInfo["mode"] = "reset_password"
+
+			verifyInfoString, err = utils.ConvertMapToString(verifyInfo)
+			if err != nil {
+				responseDTO.ServerErr = err
+				return 0, responseDTO
+			}
+
+			err := s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTimeForNumberDelay)
+			if err != nil {
+				responseDTO.ServerErr = err
+				return 0, responseDTO
+			}
+
+			responseDTO.Data["msg"] = "go to reset password"
+			responseDTO.ResponseCode = rcodes.GoRestPassword
 			return 2, responseDTO
 		}
-
-		// get otp
-		otp, ok := verifyInfo["otp"]
-		if !ok {
-			responseDTO.ServerErr = errors.New("cannot convert otp to int")
-			return 0, responseDTO
-		}
-
-		// check otp
-		if otp == strconv.Itoa(int(verifyNumberInput.OTP)) {
-
-			// get user
-			user, databaseErr := s.repo.GetByNumber(verifyNumberInput.Number)
-
-			var isUserRegistered bool
-			isUserExist := true
-
-			isUserRegistered = user.IsRegistered
-
-			if databaseErr != nil {
-				if databaseErr == database_errors.ErrRecordNotFound {
-					isUserRegistered = false
-					isUserExist = false
-
-				} else {
-					responseDTO.ServerErr = err
-					return 0, responseDTO
-				}
-			}
-
-			if !isUserRegistered {
-				// user not registered
-
-				// becuase user not found only signup mode is allowed
-				if verifyNumberInput.Mode != "signup" {
-					responseDTO.ResponseCode = rcodes.UserNotRegistered
-					responseDTO.UserErr = errors.New("user not exist. reset_password not allowed")
-					return 0, responseDTO
-				}
-
-				// user not exist. redirect to signup
-
-				verifyInfo := make(map[string]string)
-				verifyInfo["token"] = token
-				verifyInfo["mode"] = "signup"
-				verifyInfo["is_user_exist"] = strconv.FormatBool(isUserExist)
-
-				verifyInfoString, err = utils.ConvertMapToString(verifyInfo)
-				if err != nil {
-					responseDTO.ServerErr = err
-					return 0, responseDTO
-				}
-
-				// save number and token to cache for signup
-				err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTimeForNumberDelay)
-				if err != nil {
-					responseDTO.ServerErr = err
-					return 0, responseDTO
-				}
-
-				responseDTO.ResponseCode = rcodes.GoSignup
-				return 2, responseDTO
-
-			} else {
-				// user registered
-
-				// user exist so just reset password allowed
-				if verifyNumberInput.Mode != "reset_password" {
-					responseDTO.ResponseCode = rcodes.UserAlreadyRegistered
-					responseDTO.UserErr = errors.New("user already exist. signup mode not allowed")
-					return 0, responseDTO
-				}
-
-				// check is blocked
-				if user.IsBlocked {
-					responseDTO.UserErr = errors.New("you are blocked")
-					return 0, responseDTO
-				}
-
-				verifyInfo := make(map[string]string)
-				verifyInfo["token"] = token
-				verifyInfo["mode"] = "reset_password"
-
-				verifyInfoString, err = utils.ConvertMapToString(verifyInfo)
-				if err != nil {
-					responseDTO.ServerErr = err
-					return 0, responseDTO
-				}
-
-				err := s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTimeForNumberDelay)
-				if err != nil {
-					responseDTO.ServerErr = err
-					return 0, responseDTO
-				}
-
-				responseDTO.Data["msg"] = "go to reset password"
-				responseDTO.ResponseCode = rcodes.GoRestPassword
-				return 3, responseDTO
-			}
-		} else {
-			responseDTO.ResponseCode = rcodes.WrongOTP
-			responseDTO.UserErr = errors.New("code: wrong code")
-			return 0, responseDTO
-		}
-
+	} else {
+		responseDTO.ResponseCode = rcodes.WrongOTP
+		responseDTO.UserErr = errors.New("code: wrong code")
+		return 0, responseDTO
 	}
+
 }
 
 func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
