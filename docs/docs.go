@@ -477,7 +477,7 @@ const docTemplate = `{
                         "description": "Ok. code: go_signup. verify number done. user must signup"
                     },
                     "400": {
-                        "description": "BadRequest:\u003cbr\u003ecode=zero_code_first: Must zero the otp code first.\u003cbr\u003ecode=wrong_otp: The OTP is wrong.\u003cbr\u003ecode=number_delay: Wait some minutes.\u003cbr\u003ecode=invalid_field: a field is invalid"
+                        "description": "BadRequest:\u003cbr\u003ecode=go_send_otp_first: Must go to send-otp first.\u003cbr\u003ecode=wrong_otp: The OTP is wrong.\u003cbr\u003ecode=invalid_field: a field is invalid"
                     },
                     "500": {
                         "description": "Internal Server Error"

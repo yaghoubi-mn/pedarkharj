@@ -71,7 +71,7 @@ func (h *Handler) SendOTP(w http.ResponseWriter, r *http.Request) {
 // @Success 200 "Ok. code: code_sent_to_number"
 // @Success 303 "Ok. code: go_signup. verify number done. user must signup"
 // @Failure 500
-// @Failure 400 "BadRequest:<br>code=zero_code_first: Must zero the otp code first.<br>code=wrong_otp: The OTP is wrong.<br>code=number_delay: Wait some minutes.<br>code=invalid_field: a field is invalid"
+// @Failure 400 "BadRequest:<br>code=go_send_otp_first: Must go to send-otp first.<br>code=wrong_otp: The OTP is wrong.<br>code=invalid_field: a field is invalid"
 // @Router /users/verify-otp [post]
 func (h *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	var input app_user.VerifyOTPInput
