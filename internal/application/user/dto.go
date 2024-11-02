@@ -15,10 +15,10 @@ type SendOTPInput struct {
 }
 
 type VerifyOTPInput struct {
-	Number string `json:"number" validate:"required,phone_number"`
-	OTP    uint   `json:"otp"`
-	Token  string `json:"token" validate:"uuid,omitempty"` // temporary token
-	Mode   string `json:"mode"`                            // signup or reset password
+	Number string `json:"number,omitempty" validate:"required,phone_number"`
+	OTP    uint   `json:"otp,omitempty"`
+	Token  string `json:"token,omitempty" validate:"uuid"` // temporary token
+	Mode   string `json:"mode,omitempty"`                  // signup or reset password
 }
 
 type NumberInput struct {

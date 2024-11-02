@@ -10,8 +10,8 @@ type Table interface {
 }
 
 type CacheRepository interface {
-	Save(key string, value string, expireTime time.Duration) error
-	Get(key string) (string, time.Time, error)
+	Save(key string, value map[string]string, expireTime time.Duration) error
+	Get(key string) (map[string]string, time.Time, error)
 	Delete(key string) error
 }
 
@@ -26,4 +26,5 @@ type Response interface {
 	ErrorResponse(w http.ResponseWriter, status int, code string, data Map, errs ...error)
 	ServerErrorResponse(w http.ResponseWriter, err error)
 	DTOErrorResponse(w http.ResponseWriter, responseDTO ResponseDTO)
+	InvalidJSONErrorResponse(w http.ResponseWriter, err error)
 }

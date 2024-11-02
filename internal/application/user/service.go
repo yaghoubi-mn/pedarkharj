@@ -93,13 +93,7 @@ func (s *service) SendOTP(input SendOTPInput) (responseDTO datatypes.ResponseDTO
 		verifyInfo["token"] = token.String()
 		verifyInfo["otp"] = strconv.Itoa(otp)
 
-		verifyInfoString, err := utils.ConvertMapToString(verifyInfo)
-		if err != nil {
-			responseDTO.ServerErr = err
-			return responseDTO
-		}
-
-		err = s.cacheRepo.Save(input.Number, verifyInfoString, config.VerifyNumberCacheExpireTime)
+		err = s.cacheRepo.Save(input.Number, verifyInfo, config.VerifyNumberCacheExpireTime)
 		if err != nil {
 			responseDTO.ServerErr = err
 			return responseDTO
@@ -149,7 +143,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 		return 0, responseDTO
 	}
 
-	verifyInfoString, _, err := s.cacheRepo.Get(verifyNumberInput.Number)
+	verifyInfo, _, err := s.cacheRepo.Get(verifyNumberInput.Number)
 
 	if err != nil {
 		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
@@ -164,12 +158,6 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 		// 	return 0, rcodes.OTPExpired, tokens, errMap, nil
 		// }
 
-		responseDTO.ServerErr = err
-		return 0, responseDTO
-	}
-
-	verifyInfo, err := utils.ConvertStringToMap(verifyInfoString)
-	if err != nil {
 		responseDTO.ServerErr = err
 		return 0, responseDTO
 	}
@@ -235,14 +223,8 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 			verifyInfo["mode"] = "signup"
 			verifyInfo["is_user_exist"] = strconv.FormatBool(isUserExist)
 
-			verifyInfoString, err = utils.ConvertMapToString(verifyInfo)
-			if err != nil {
-				responseDTO.ServerErr = err
-				return 0, responseDTO
-			}
-
 			// save number and token to cache for signup
-			err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTimeForNumberDelay)
+			err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfo, config.VerifyNumberCacheExpireTimeForNumberDelay)
 			if err != nil {
 				responseDTO.ServerErr = err
 				return 0, responseDTO
@@ -271,13 +253,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 			verifyInfo["token"] = token
 			verifyInfo["mode"] = "reset_password"
 
-			verifyInfoString, err = utils.ConvertMapToString(verifyInfo)
-			if err != nil {
-				responseDTO.ServerErr = err
-				return 0, responseDTO
-			}
-
-			err := s.cacheRepo.Save(verifyNumberInput.Number, verifyInfoString, config.VerifyNumberCacheExpireTimeForNumberDelay)
+			err := s.cacheRepo.Save(verifyNumberInput.Number, verifyInfo, config.VerifyNumberCacheExpireTimeForNumberDelay)
 			if err != nil {
 				responseDTO.ServerErr = err
 				return 0, responseDTO
@@ -317,7 +293,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		return responseDTO
 	}
 
-	verifyInfoString, _, err := s.cacheRepo.Get(userInput.Number)
+	verifyInfo, _, err := s.cacheRepo.Get(userInput.Number)
 	if err != nil {
 		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
 
@@ -329,12 +305,6 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 			responseDTO.ServerErr = err
 			return responseDTO
 		}
-	}
-
-	verifyInfo, err := utils.ConvertStringToMap(verifyInfoString)
-	if err != nil {
-		responseDTO.ServerErr = err
-		return responseDTO
 	}
 
 	// check token
@@ -434,7 +404,7 @@ func (s *service) ResetPassword(input RestPasswordInput) (responseDTO datatypes.
 		return
 	}
 
-	verifyInfoString, _, err := s.cacheRepo.Get(input.Number)
+	verifyInfo, _, err := s.cacheRepo.Get(input.Number)
 	if err != nil {
 		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
 
@@ -446,12 +416,6 @@ func (s *service) ResetPassword(input RestPasswordInput) (responseDTO datatypes.
 			responseDTO.ServerErr = err
 			return responseDTO
 		}
-	}
-
-	verifyInfo, err := utils.ConvertStringToMap(verifyInfoString)
-	if err != nil {
-		responseDTO.ServerErr = err
-		return responseDTO
 	}
 
 	if token, ok := verifyInfo["token"]; !ok && token != input.Token {
