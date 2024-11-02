@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/service_errors"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
 )
 
@@ -26,7 +27,75 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestVerifyNumber(t *testing.T) {
+func TestSendOTP(t *testing.T) {
+
+	tests := []struct {
+		ID      int
+		Number  string
+		WantErr error
+	}{
+		{ // test success
+			ID:      1,
+			Number:  "+989123456789",
+			WantErr: nil,
+		},
+		{ // test invalid number
+			ID:      2,
+			Number:  "+98912345678",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      3,
+			Number:  "09123456789",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      4,
+			Number:  "+99123456789",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      5,
+			Number:  "+9893456789",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      6,
+			Number:  "",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      7,
+			Number:  "+",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      8,
+			Number:  "+9891234567891",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      9,
+			Number:  "+981234567899",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      10,
+			Number:  "+989123a45678",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+	}
+
+	for _, tt := range tests {
+		userErr := userService.SendOTP(domain_user.SendOTPInput{
+			Number: tt.Number,
+		})
+
+		assert.Equal(t, tt.WantErr, userErr, tt)
+	}
+}
+
+func TestVerifyOTP(t *testing.T) {
 
 	tests := []struct {
 		name    string
@@ -88,7 +157,7 @@ func TestVerifyNumber(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		userErr, serverErr := userService.VerifyNumber(domain_user.VerifyNumberInput{
+		userErr, serverErr := userService.VerifyOTP(domain_user.VerifyOTPInput{
 			Number: tt.number,
 			OTP:    tt.code,
 			Token:  tt.token,
@@ -284,36 +353,220 @@ func TestResetPassword(t *testing.T) {
 func TestCheckNumber(t *testing.T) {
 
 	tests := []struct {
+		ID      int
 		Number  string
 		WantErr error
 	}{
 		{ // test success
+			ID:      1,
 			Number:  "+989123456789",
 			WantErr: nil,
 		},
-		{ // test
-			Number:  "+989123456789",
-			WantErr: nil,
+		{ // test invalid number
+			ID:      2,
+			Number:  "+98912345678",
+			WantErr: service_errors.ErrInvalidNumber,
 		},
+		{ // test invalid number
+			ID:      3,
+			Number:  "09123456789",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      4,
+			Number:  "+99123456789",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      5,
+			Number:  "+9893456789",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      6,
+			Number:  "",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      7,
+			Number:  "+",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      8,
+			Number:  "+9891234567891",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      9,
+			Number:  "+981234567899",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:      10,
+			Number:  "+989123a45678",
+			WantErr: service_errors.ErrInvalidNumber,
+		},
+	}
+
+	for _, tt := range tests {
+		userErr := userService.CheckNumber(tt.Number)
+
+		assert.Equal(t, tt.WantErr, userErr, tt)
+	}
+}
+
+func TestLogin(t *testing.T) {
+	salt, err := utils.GenerateRandomSalt()
+	assert.NoError(t, err)
+
+	getPasswordHash := func(password string) string {
+		hashedPassword, err := utils.HashPasswordWithSalt(password, salt, 4)
+		assert.NoError(t, err)
+
+		return hashedPassword
+	}
+
+	tests := []struct {
+		ID             int
+		Number         string
+		Password       string
+		HashedPassword string
+		IsRegistered   bool
+		IsBlocked      bool
+		WantErr        error
+	}{
 		{ // test success
-			Number:  "+989123456789",
-			WantErr: nil,
+			ID:             1,
+			Number:         "+989123456789",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   true,
+			IsBlocked:      false,
+			WantErr:        nil,
 		},
-		{ // test success
-			Number:  "+989123456789",
-			WantErr: nil,
+		{ // test invalid number
+			ID:             2,
+			Number:         "+98912345678",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   true,
+			IsBlocked:      false,
+			WantErr:        service_errors.ErrInvalidNumber,
 		},
-		{ // test success
-			Number:  "+989123456789",
-			WantErr: nil,
+		{ // test invalid number
+			ID:             3,
+			Number:         "09123456789",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   true,
+			IsBlocked:      false,
+			WantErr:        service_errors.ErrInvalidNumber,
 		},
-		{ // test success
-			Number:  "+989123456789",
-			WantErr: nil,
+		{ // test invalid number
+			ID:             4,
+			Number:         "+99123456789",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   true,
+			IsBlocked:      false,
+			WantErr:        service_errors.ErrInvalidNumber,
 		},
-		{ // test success
-			Number:  "+989123456789",
-			WantErr: nil,
+		{ // test invalid number
+			ID:             5,
+			Number:         "+9893456789",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   true,
+			IsBlocked:      false,
+			WantErr:        service_errors.ErrInvalidNumber,
 		},
+		{ // test invalid number
+			ID:             6,
+			Number:         "",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   true,
+			IsBlocked:      false,
+			WantErr:        service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:             7,
+			Number:         "+",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   true,
+			IsBlocked:      false,
+			WantErr:        service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:             8,
+			Number:         "+9891234567891",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   true,
+			IsBlocked:      false,
+			WantErr:        service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:             9,
+			Number:         "+981234567899",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   true,
+			IsBlocked:      false,
+			WantErr:        service_errors.ErrInvalidNumber,
+		},
+		{ // test invalid number
+			ID:             10,
+			Number:         "+989123a45678",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   true,
+			IsBlocked:      false,
+			WantErr:        service_errors.ErrInvalidNumber,
+		},
+		{ // test wrong password
+			ID:             11,
+			Number:         "+989123456789",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678d"),
+			IsRegistered:   true,
+			IsBlocked:      false,
+			WantErr:        service_errors.ErrWrongPassword,
+		},
+		{ // test user not registered
+			ID:             11,
+			Number:         "+989123456789",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   false,
+			IsBlocked:      false,
+			WantErr:        service_errors.ErrUserNotRegistered,
+		},
+		{ // test blocked user
+			ID:             11,
+			Number:         "+989123456789",
+			Password:       "12345678",
+			HashedPassword: getPasswordHash("12345678"),
+			IsRegistered:   true,
+			IsBlocked:      true,
+			WantErr:        service_errors.ErrBlockedUser,
+		},
+	}
+
+	for _, tt := range tests {
+
+		userErr, serverErr := userService.Login(domain_user.LoginUserInput{
+			Number:        tt.Number,
+			InputPassword: tt.Password,
+			RealPassword:  tt.HashedPassword,
+			Salt:          salt,
+			IsRegistered:  tt.IsRegistered,
+			IsBlocked:     tt.IsBlocked,
+		})
+
+		assert.NoError(t, serverErr)
+		assert.Equal(t, tt.WantErr, userErr, tt)
 	}
 }
