@@ -6,6 +6,7 @@ import (
 
 	"github.com/yaghoubi-mn/pedarkharj/pkg/database_errors"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 	"gorm.io/gorm"
 )
 
@@ -32,11 +33,16 @@ func MigrateTables(db *gorm.DB) error {
 	return db.AutoMigrate(&CacheTable{})
 }
 
-func (g GormCacheRepository) Save(key string, value string, expireTime time.Duration) error {
+func (g GormCacheRepository) Save(key string, value map[string]string, expireTime time.Duration) error {
 	var c CacheTable
 	c.Key = key
-	c.Value = value
 	c.Expire = time.Now().Add(expireTime)
+
+	var err error
+	c.Value, err = utils.ConvertMapToString(value)
+	if err != nil {
+		return err
+	}
 
 	// delete if already saved
 	if err := g.Delete(key); err != nil {
@@ -59,21 +65,23 @@ func (g GormCacheRepository) DeleteExpiredRecords() {
 	}
 }
 
-func (g GormCacheRepository) Get(key string) (string, time.Time, error) {
+func (g GormCacheRepository) Get(key string) (map[string]string, time.Time, error) {
 	var c CacheTable
 	if err := g.DB.First(&c, CacheTable{Key: key}).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return "", c.Expire, database_errors.ErrRecordNotFound
+			return nil, c.Expire, database_errors.ErrRecordNotFound
 		}
-		return "", c.Expire, err
+		return nil, c.Expire, err
 	}
 
 	// check expire
 	if c.Expire.Sub(time.Now()).Seconds() < 0 {
-		return "", c.Expire, database_errors.ErrExpired
+		return nil, c.Expire, database_errors.ErrExpired
 	}
 
-	return c.Value, c.Expire, nil
+	value, err := utils.ConvertStringToMap(c.Value)
+
+	return value, c.Expire, err
 }
 
 func (g GormCacheRepository) Delete(key string) error {

@@ -43,6 +43,10 @@ func NewValidator() datatypes.Validator {
 			slog.Error("error in number regex", "err", err)
 		}
 
+		if len(fl.Field().String()) != 13 {
+			return false
+		}
+
 		return ok
 	})
 	vald.RegisterValidation("useragent", func(fl validator_lib.FieldLevel) bool {

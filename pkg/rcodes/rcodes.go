@@ -9,6 +9,7 @@ const (
 	InvalidHeader     = "invalid_header"
 	InvalidToken      = "invalid_token"
 	Unauthenticated   = "unauthenticated"
+	InvalidJSON = "invalid_json"
 
 	// user
 	CodeSendToNumber      = "code_sent_to_number"
