@@ -1,10 +1,10 @@
 package domain_device
 
 import (
-	"errors"
 	"time"
 
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/service_errors"
 )
 
 type DeviceDomainService interface {
@@ -26,19 +26,19 @@ func NewDeviceService(validator datatypes.Validator) DeviceDomainService {
 
 func (s *service) Create(device *Device) error {
 	if err := s.validator.ValidateFieldByFieldName("Name", device.Name, Device{}); err != nil {
-		return errors.New("name: " + err.Error())
+		return service_errors.ErrInvalidUserAgent
 	}
 
 	if err := s.validator.ValidateFieldByFieldName("LastIP", device.LastIP, Device{}); err != nil {
-		return errors.New("lastIP: " + err.Error())
+		return service_errors.ErrInvalidIP
 	}
 
 	if err := s.validator.ValidateFieldByFieldName("RefreshToken", device.RefreshToken, Device{}); err != nil {
-		return errors.New("refresh: invalid refresh token: " + err.Error())
+		return service_errors.ErrInvalidRefreshToken
 	}
 
 	if device.UserID == 0 {
-		return errors.New("invalid user id")
+		return service_errors.ErrInvalidUserID
 	}
 
 	device.LastLogin = time.Now()
@@ -50,15 +50,16 @@ func (s *service) Create(device *Device) error {
 
 func (s *service) CreateOrUpdate(device *Device) error {
 	if err := s.validator.ValidateFieldByFieldName("Name", device.Name, Device{}); err != nil {
-		return errors.New("name: " + err.Error())
+		return service_errors.ErrInvalidName
+
 	}
 
 	if err := s.validator.ValidateFieldByFieldName("LastIP", device.LastIP, Device{}); err != nil {
-		return errors.New("lastIP: " + err.Error())
+		return service_errors.ErrInvalidIP
 	}
 
 	if err := s.validator.ValidateFieldByFieldName("RefreshToken", device.RefreshToken, Device{}); err != nil {
-		return errors.New("refresh: invalid refresh token: " + err.Error())
+		return service_errors.ErrInvalidRefreshToken
 	}
 
 	device.LastLogin = time.Now()
@@ -73,11 +74,11 @@ func (s *service) CreateOrUpdate(device *Device) error {
 
 func (s *service) Logout(userID uint64, deviceName string) error {
 	if err := s.validator.ValidateFieldByFieldName("Name", deviceName, Device{}); err != nil {
-		return err
+		return service_errors.ErrInvalidUserAgent
 	}
 
 	if userID == 0 {
-		return errors.New("invalid userID")
+		return service_errors.ErrInvalidUserID
 	}
 
 	return nil
@@ -86,7 +87,7 @@ func (s *service) Logout(userID uint64, deviceName string) error {
 func (s *service) LogoutAllUserDevices(userID uint64) error {
 
 	if userID == 0 {
-		return errors.New("ivnalid userID")
+		return service_errors.ErrInvalidUserID
 	}
 
 	return nil

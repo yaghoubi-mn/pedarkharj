@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -80,4 +81,9 @@ func (j *jsonResponse) DTOErrorResponse(w http.ResponseWriter, responseDTO datat
 		j.ErrorResponse(w, 400, responseDTO.ResponseCode, responseDTO.Data, responseDTO.UserErr)
 	}
 
+}
+
+func (j *jsonResponse) InvalidJSONErrorResponse(w http.ResponseWriter, err error) {
+
+	j.ErrorResponse(w, 400, "invalid_json", nil, errors.New("invalid json"))
 }

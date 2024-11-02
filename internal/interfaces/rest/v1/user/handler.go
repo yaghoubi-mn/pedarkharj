@@ -39,9 +39,13 @@ func (h *Handler) SendOTP(w http.ResponseWriter, r *http.Request) {
 	// decode body
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
-	decoder.Decode(&input)
-
+	err := decoder.Decode(&input)
 	defer r.Body.Close()
+
+	if err != nil {
+		h.response.InvalidJSONErrorResponse(w, err)
+		return
+	}
 
 	// userAgent := utils.GetUserAgent(r)
 	// userIP := utils.GetIPAddress(r)
@@ -75,10 +79,13 @@ func (h *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	var input app_user.VerifyOTPInput
 	// decode body
 	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	decoder.Decode(&input)
-
 	defer r.Body.Close()
+	decoder.DisallowUnknownFields()
+	err := decoder.Decode(&input)
+	if err != nil {
+		h.response.InvalidJSONErrorResponse(w, err)
+		return
+	}
 
 	userAgent := utils.GetUserAgent(r)
 	userIP := utils.GetIPAddress(r)
@@ -125,10 +132,13 @@ func (h *Handler) SignupUser(w http.ResponseWriter, r *http.Request) {
 	var userInput app_user.SignupUserInput
 	// decode body
 	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	decoder.Decode(&userInput)
-
 	defer r.Body.Close()
+	decoder.DisallowUnknownFields()
+	err := decoder.Decode(&userInput)
+	if err != nil {
+		h.response.InvalidJSONErrorResponse(w, err)
+		return
+	}
 
 	userAgent := utils.GetUserAgent(r)
 	userIP := utils.GetIPAddress(r)
@@ -158,8 +168,13 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var userInput app_user.LoginUserInput
 	// decode body
 	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
 	decoder.DisallowUnknownFields()
-	decoder.Decode(&userInput)
+	err := decoder.Decode(&userInput)
+	if err != nil {
+		h.response.InvalidJSONErrorResponse(w, err)
+		return
+	}
 
 	responseDTO := h.appService.Login(userInput, utils.GetUserAgent(r), utils.GetIPAddress(r))
 	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
@@ -187,8 +202,13 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var input app_user.RestPasswordInput
 	// decode body
 	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
 	decoder.DisallowUnknownFields()
-	decoder.Decode(&input)
+	err := decoder.Decode(&input)
+	if err != nil {
+		h.response.InvalidJSONErrorResponse(w, err)
+		return
+	}
 
 	responseDTO := h.appService.ResetPassword(input)
 	if responseDTO.UserErr != nil || responseDTO.ServerErr != nil {
@@ -241,7 +261,14 @@ func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
 
 	var numberInput app_user.NumberInput
 
-	json.NewDecoder(r.Body).Decode(&numberInput)
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+	decoder.DisallowUnknownFields()
+	err := decoder.Decode(&numberInput)
+	if err != nil {
+		h.response.InvalidJSONErrorResponse(w, err)
+		return
+	}
 
 	responseDTO := h.appService.CheckNumber(numberInput)
 	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
@@ -266,7 +293,14 @@ func (h *Handler) GetAccessFromRefresh(w http.ResponseWriter, r *http.Request) {
 
 	var refreshInput app_user.RefreshInput
 
-	json.NewDecoder(r.Body).Decode(&refreshInput)
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+	decoder.DisallowUnknownFields()
+	err := decoder.Decode(&refreshInput)
+	if err != nil {
+		h.response.InvalidJSONErrorResponse(w, err)
+		return
+	}
 
 	responseDTO := h.appService.GetAccessFromRefresh(refreshInput.Refresh)
 	if responseDTO.ServerErr != nil || responseDTO.UserErr != nil {
@@ -292,9 +326,13 @@ func (h *Handler) ChooseUserAvatar(w http.ResponseWriter, r *http.Request) {
 	var avatarInput app_user.AvatarChooseInput
 
 	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	decoder.Decode(&avatarInput)
 	defer r.Body.Close()
+	decoder.DisallowUnknownFields()
+	err := decoder.Decode(&avatarInput)
+	if err != nil {
+		h.response.InvalidJSONErrorResponse(w, err)
+		return
+	}
 
 	iUser := r.Context().Value("user")
 	if iUser == nil {

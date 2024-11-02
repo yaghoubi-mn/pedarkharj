@@ -114,7 +114,7 @@ func (s *service) SendOTP(input SendOTPInput) (responseDTO datatypes.ResponseDTO
 	// otp code sent and not expired
 
 	responseDTO.ResponseCode = rcodes.NumberDelay
-	responseDTO.UserErr = errors.New("number: otp not expired. wait some minutes")
+	responseDTO.UserErr = service_errors.ErrOTPNotExpired
 	responseDTO.ServerErr = err
 	responseDTO.Data["delayTimeSeconds"] = math.Round(delayTime.Seconds())
 	return responseDTO
@@ -149,7 +149,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
 
 			responseDTO.ResponseCode = rcodes.GoSendOTPFirst
-			responseDTO.UserErr = errors.New("code: OTP wasn't sent. go send-otp first")
+			responseDTO.UserErr = service_errors.ErrOTPNotSend
 			return 0, responseDTO
 
 		}
@@ -165,7 +165,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 	// get token from verifyInfo
 	token, ok := verifyInfo["token"]
 	if !ok {
-		responseDTO.ServerErr = errors.New("cannot convert token to string")
+		responseDTO.ServerErr = errors.New("token not found in verifyInfo in VerifyOTP")
 		return 0, responseDTO
 	}
 
@@ -173,7 +173,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 	if token != verifyNumberInput.Token {
 
 		responseDTO.ResponseCode = rcodes.InvalidField
-		responseDTO.UserErr = errors.New("token: invalid token")
+		responseDTO.UserErr = service_errors.ErrWrongToken
 		return 0, responseDTO
 	}
 
@@ -212,7 +212,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 			// becuase user not found only signup mode is allowed
 			if verifyNumberInput.Mode != "signup" {
 				responseDTO.ResponseCode = rcodes.UserNotRegistered
-				responseDTO.UserErr = errors.New("user not exist. reset_password not allowed")
+				responseDTO.UserErr = service_errors.ErrUserNotRegisteredResetPasswordNotAllowed
 				return 0, responseDTO
 			}
 
@@ -224,7 +224,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 			verifyInfo["is_user_exist"] = strconv.FormatBool(isUserExist)
 
 			// save number and token to cache for signup
-			err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfo, config.VerifyNumberCacheExpireTimeForNumberDelay)
+			err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfo, config.VerifyNumberCacheExpireTime)
 			if err != nil {
 				responseDTO.ServerErr = err
 				return 0, responseDTO
@@ -239,21 +239,22 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 			// user exist so just reset password allowed
 			if verifyNumberInput.Mode != "reset_password" {
 				responseDTO.ResponseCode = rcodes.UserAlreadyRegistered
-				responseDTO.UserErr = errors.New("user already exist. signup mode not allowed")
+				responseDTO.UserErr = service_errors.ErrUserAlreayRegisteredSignupNotAllowed
 				return 0, responseDTO
 			}
 
 			// check is blocked
 			if user.IsBlocked {
-				responseDTO.UserErr = errors.New("you are blocked")
+				responseDTO.UserErr = service_errors.ErrBlockedUser
 				return 0, responseDTO
 			}
 
 			verifyInfo := make(map[string]string)
 			verifyInfo["token"] = token
 			verifyInfo["mode"] = "reset_password"
+			verifyInfo["is_user_exist"] = strconv.FormatBool(isUserExist)
 
-			err := s.cacheRepo.Save(verifyNumberInput.Number, verifyInfo, config.VerifyNumberCacheExpireTimeForNumberDelay)
+			err := s.cacheRepo.Save(verifyNumberInput.Number, verifyInfo, config.VerifyNumberCacheExpireTime)
 			if err != nil {
 				responseDTO.ServerErr = err
 				return 0, responseDTO
@@ -265,7 +266,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 		}
 	} else {
 		responseDTO.ResponseCode = rcodes.WrongOTP
-		responseDTO.UserErr = errors.New("code: wrong code")
+		responseDTO.UserErr = service_errors.ErrWrongOTP
 		return 0, responseDTO
 	}
 
@@ -298,7 +299,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
 
 			responseDTO.ResponseCode = rcodes.VerifyNumberFirst
-			responseDTO.UserErr = errors.New("verify number first")
+			responseDTO.UserErr = service_errors.ErrVerifyNumberFirst
 			return responseDTO
 
 		} else {
@@ -308,7 +309,12 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 	}
 
 	// check token
-	if verifyInfo["token"] != userInput.Token {
+	token, ok := verifyInfo["token"]
+	if !ok {
+		responseDTO.ServerErr = errors.New("token not found verifyInfo in signup")
+		return
+	}
+	if token != userInput.Token {
 
 		responseDTO.ResponseCode = rcodes.InvalidField
 		responseDTO.UserErr = service_errors.ErrInvalidToken
@@ -316,10 +322,14 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 	}
 
 	verify, ok := verifyInfo["mode"]
-	if !ok || verify != "signup" {
+	if !ok {
+		responseDTO.ServerErr = errors.New("mode not found in verifyInfo in signup")
+		return
+	}
+	if verify != "signup" {
 
 		responseDTO.ResponseCode = rcodes.VerifyNumberFirst
-		responseDTO.UserErr = errors.New("verify number first")
+		responseDTO.UserErr = service_errors.ErrVerifyNumberFirst
 		return responseDTO
 	}
 
@@ -409,7 +419,7 @@ func (s *service) ResetPassword(input RestPasswordInput) (responseDTO datatypes.
 		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
 
 			responseDTO.ResponseCode = rcodes.VerifyNumberFirst
-			responseDTO.UserErr = errors.New("verify number first")
+			responseDTO.UserErr = service_errors.ErrVerifyNumberFirst
 			return responseDTO
 
 		} else {
@@ -418,12 +428,22 @@ func (s *service) ResetPassword(input RestPasswordInput) (responseDTO datatypes.
 		}
 	}
 
-	if token, ok := verifyInfo["token"]; !ok && token != input.Token {
-		responseDTO.UserErr = errors.New("token: invlid token")
+	token, ok := verifyInfo["token"]
+	if !ok {
+		responseDTO.ServerErr = errors.New("token not found in verifyInfo in ResetPassowrd")
+		return
+	}
+	if token != input.Token {
+		responseDTO.UserErr = service_errors.ErrInvalidToken
 		return
 	}
 
-	if mode, ok := verifyInfo["mode"]; !ok && mode != "reset_password" {
+	mode, ok := verifyInfo["mode"]
+	if !ok {
+		responseDTO.ServerErr = errors.New("mode not foundd in verifyInfo in ResetPassword")
+		return
+	}
+	if mode != "reset_password" {
 		responseDTO.Data["msg"] = "invalid mode"
 		return
 	}
@@ -520,7 +540,7 @@ func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP s
 		if err == database_errors.ErrRecordNotFound {
 			responseDTO.ResponseCode = rcodes.NumberNotExist
 			responseDTO.Data["msg"] = "number not exist."
-			responseDTO.UserErr = errors.New("number: number not exist")
+			responseDTO.UserErr = service_errors.ErrNumberNotExist
 			return
 		}
 		responseDTO.ServerErr = err
@@ -609,7 +629,7 @@ func (s *service) ChooseUserAvatar(avatarName string, userID uint64) (responseDT
 
 	if !found {
 		responseDTO.ResponseCode = rcodes.AvatarNotFound
-		responseDTO.UserErr = errors.New("avatar: avatar not found")
+		responseDTO.UserErr = service_errors.ErrAvatarNotFound
 		return
 	}
 
