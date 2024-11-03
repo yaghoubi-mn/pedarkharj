@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,13 +16,12 @@ import (
 	gorm_repository "github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/repository/gorm"
 	interfaces_rest_v1 "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/cache"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/database"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/s3"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	gorm_logger "gorm.io/gorm/logger"
 )
 
 // @title Pedarkharj
@@ -49,14 +47,25 @@ func main() {
 	s3.Init()
 
 	// setup database
-	db := SetupGrom()
+	db, err := database.SetupGrom()
+	if err != nil {
+		slog.Error("database", "error", err)
+		os.Exit(1)
+	}
+
 	// setup cache
 	cacheRepo := cache.New(db)
 
 	// migrate
 	if len(os.Args) > 1 && os.Args[1] == "migrate" {
-		slog.Info("migration tables")
-		err := MigrateTables(db)
+		slog.Info("migrating tables")
+
+		err := database.MigrateTables(
+			db,
+			domain_user.User{},
+			domain_device.Device{},
+		)
+
 		if err != nil {
 			slog.Warn("Cannot migrate tables", "error", err.Error())
 		}
@@ -107,27 +116,4 @@ func setupRouter(db *gorm.DB, validatorIns datatypes.Validator, cacheRepo dataty
 	muxV1 := interfaces_rest_v1.NewRouter(userAppService, deviceAppService)
 
 	return muxV1
-}
-
-func SetupGrom() *gorm.DB {
-	// connet to database
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Tehran", os.Getenv("DB_HOST"), os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("DB_PORT"))
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: gorm_logger.Default.LogMode(gorm_logger.Info),
-	})
-	if err != nil {
-		slog.Error("Cannot connect to database", "error", err.Error())
-		os.Exit(1)
-	}
-
-	return db
-}
-
-func MigrateTables(db *gorm.DB) error {
-
-	return db.AutoMigrate(
-		&domain_user.User{},
-		&domain_device.Device{},
-	)
-
 }
