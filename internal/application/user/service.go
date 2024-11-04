@@ -389,7 +389,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 
 	// after signup uesr must be wait until number delay
 	verifyInfo["mode"] = "done"
-	if err := s.cacheRepo.Save(userInput.Number, verifyInfo, config.VerifyNumberCacheExpireTimeForNumberDelay); err != nil {
+	if err := s.cacheRepo.Save(userInput.Number, verifyInfo, config.VerifyNumberCacheExpireTime); err != nil {
 		responseDTO.ServerErr = err
 		return responseDTO
 	}
@@ -467,7 +467,7 @@ func (s *service) ResetPassword(input RestPasswordInput) (responseDTO datatypes.
 
 	// user must be wait until number delay
 	verifyInfo["mode"] = "done"
-	if err = s.cacheRepo.Save(input.Number, verifyInfo, config.VerifyNumberCacheExpireTimeForNumberDelay); err != nil {
+	if err = s.cacheRepo.Save(input.Number, verifyInfo, config.VerifyNumberCacheExpireTime); err != nil {
 		responseDTO.ServerErr = err
 		return
 	}
