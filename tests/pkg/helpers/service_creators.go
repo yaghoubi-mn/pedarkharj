@@ -13,6 +13,7 @@ import (
 	"github.com/yaghoubi-mn/pedarkharj/pkg/cache"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/database"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/s3"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
 	"gorm.io/gorm"
 )
@@ -28,6 +29,9 @@ func init() {
 		os.Exit(1)
 	}
 
+	// setup s3
+	s3.Init()
+
 	db, err = database.SetupGromForTest()
 	if err != nil {
 		slog.Error("database", "error", err)
@@ -38,7 +42,7 @@ func init() {
 		db,
 		domain_user.User{},
 		domain_device.Device{},
-		cache.CacheTable{},
+		cache.Cache{},
 	)
 
 	if err != nil {
@@ -48,6 +52,7 @@ func init() {
 
 	db.Raw("delete from users")
 	db.Raw("delete from devices")
+	db.Raw("delete from caches")
 
 }
 

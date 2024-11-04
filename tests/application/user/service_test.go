@@ -13,6 +13,7 @@ import (
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 	"github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/config"
+	"github.com/yaghoubi-mn/pedarkharj/pkg/database_errors"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/service_errors"
@@ -430,5 +431,199 @@ func TestVerifyOTP(t *testing.T) {
 		tt.NextRunCode(tt.Number)
 
 	}
+
+}
+
+func TestSignup(t *testing.T) {
+
+	tests := []struct {
+		TestName            string
+		PreRunCode          func(number string)
+		Number              string
+		Name                string
+		Password            string
+		Mode                string
+		DeviceName          string
+		DeviceIP            string
+		WantUserErr         error
+		ResponseCode        string
+		ResponseDTODataKeys []string
+		NextRunCode         func(number string)
+	}{
+		{
+			TestName:            "test sucess. number not exist in database. signup mode",
+			PreRunCode:          func(number string) {},
+			Number:              number_generator.GetNumber(),
+			Name:                "test",
+			Mode:                "signup",
+			Password:            "12345678",
+			DeviceName:          "test",
+			DeviceIP:            "1.1.1.1",
+			WantUserErr:         nil,
+			ResponseCode:        "",
+			ResponseDTODataKeys: []string{"refresh", "access"},
+			NextRunCode: func(number string) {
+
+				// data must be deleted from database
+				_, _, err := cacheRepo.Get(number)
+				if err != database_errors.ErrRecordNotFound && err != database_errors.ErrExpired {
+
+					assert.Error(t, errors.New("record found in database after signup complete"))
+				}
+
+			},
+		},
+
+		{
+			TestName: "test success. user exist in database (not registered). signup mode",
+			PreRunCode: func(number string) {
+
+				// create user in database
+				err := repo.Create(&domain_user.User{
+					Name:         "test",
+					Number:       number,
+					Password:     "dfd",
+					Salt:         "as",
+					Avatar:       "dafd.com",
+					IsRegistered: false,
+					RegisteredAt: time.Now(),
+				})
+
+				assert.NoError(t, err)
+			},
+			Number:              number_generator.GetNumber(),
+			Name:                "test",
+			Password:            "12345678",
+			Mode:                "signup",
+			DeviceName:          "test",
+			DeviceIP:            "1.1.1.1",
+			WantUserErr:         nil,
+			ResponseCode:        "",
+			ResponseDTODataKeys: []string{},
+			NextRunCode: func(number string) {
+
+				// data must be deleted from database
+				_, _, err := cacheRepo.Get(number)
+				if err != database_errors.ErrRecordNotFound && err != database_errors.ErrExpired {
+
+					assert.Error(t, errors.New("record found in database after signup complete"))
+				}
+			},
+		},
+
+		{
+			TestName:            "test failure. invalid name",
+			PreRunCode:          func(number string) {},
+			Number:              number_generator.GetNumber(),
+			Name:                "",
+			Password:            "12345678",
+			Mode:                "reset_password",
+			DeviceName:          "test",
+			DeviceIP:            "1.1.1.1",
+			WantUserErr:         service_errors.ErrInvalidName,
+			ResponseCode:        rcodes.InvalidField,
+			ResponseDTODataKeys: []string{},
+			NextRunCode:         func(number string) {},
+		},
+
+		{
+			TestName:            "test failure. small password",
+			PreRunCode:          func(number string) {},
+			Number:              number_generator.GetNumber(),
+			Name:                "test",
+			Password:            "1234567",
+			Mode:                "signup",
+			DeviceName:          "test",
+			DeviceIP:            "1.1.1.1",
+			WantUserErr:         service_errors.ErrSmallPassword,
+			ResponseCode:        rcodes.InvalidField,
+			ResponseDTODataKeys: []string{},
+			NextRunCode:         func(number string) {},
+		},
+	}
+
+	for _, tt := range tests {
+
+		contin := false // if one step raise error continue to next test case
+
+		tt.PreRunCode(tt.Number)
+
+		// call send otp
+		responseDTO := appService.SendOTP(app_user.SendOTPInput{
+			Number: tt.Number,
+		})
+		contin = contin || assert.NoError(t, responseDTO.ServerErr)
+		contin = contin || assert.NoError(t, responseDTO.UserErr)
+
+		if contin {
+			continue
+		}
+
+		// get otp from cache
+		data, _, err := cacheRepo.Get(tt.Number)
+		assert.NoError(t, err, "cache database error")
+		otp, err := strconv.Atoi(data["otp"])
+		assert.NoError(t, err)
+
+		token := responseDTO.Data["token"].(string)
+
+		// verify otp
+		_, responseDTO = appService.VerifyOTP(app_user.VerifyOTPInput{
+			Number: tt.Number,
+			OTP:    uint(otp),
+			Token:  token,
+			Mode:   tt.Mode,
+		}, tt.DeviceName, tt.DeviceIP)
+		assert.NoError(t, responseDTO.ServerErr, fmt.Sprintf("TestName: %v", tt.TestName))
+		assert.NoError(t, responseDTO.UserErr, fmt.Sprintf("TestName: %v", tt.TestName))
+
+		// signup
+		responseDTO = appService.Signup(app_user.SignupUserInput{
+			Number:   tt.Number,
+			Name:     tt.Name,
+			Password: tt.Password,
+			Token:    token,
+		}, tt.DeviceName, tt.DeviceIP)
+
+		assert.NoError(t, responseDTO.ServerErr, responseDTO)
+		assert.Equal(t, tt.WantUserErr, responseDTO.UserErr, responseDTO)
+
+		err = utils.CheckMapHaveKeys(responseDTO.Data, tt.ResponseDTODataKeys...)
+		assert.NoError(t, err)
+
+		tt.NextRunCode(tt.Number)
+
+	}
+
+	// custom tests
+
+	// test failure. invalid mode saved in cache
+
+	number := number_generator.GetNumber()
+	token := uuid.NewString()
+
+	// create user in database
+	err := cacheRepo.Save(
+		number,
+		map[string]string{
+			"token":         token,
+			"mode":          "reset_password",
+			"is_user_exist": "false",
+		},
+		10*time.Minute)
+
+	assert.NoError(t, err)
+
+	responseDTO := appService.Signup(app_user.SignupUserInput{
+		Number:   number,
+		Name:     "test",
+		Password: "12345678",
+		Token:    token,
+	}, "test", "1.1.1.1")
+
+	assert.NoError(t, responseDTO.ServerErr)
+
+	assert.Equal(t, service_errors.ErrVerifyNumberFirst, responseDTO.UserErr, responseDTO)
+	assert.Equal(t, rcodes.VerifyNumberFirst, responseDTO.ResponseCode, responseDTO)
 
 }
