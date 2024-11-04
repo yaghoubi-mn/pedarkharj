@@ -11,7 +11,7 @@ import (
 )
 
 // database table
-type CacheTable struct {
+type Cache struct {
 	ID     uint64
 	Key    string `gorm:"unique"`
 	Value  string
@@ -30,11 +30,11 @@ func New(db *gorm.DB) datatypes.CacheRepository {
 }
 
 func MigrateTables(db *gorm.DB) error {
-	return db.AutoMigrate(&CacheTable{})
+	return db.AutoMigrate(&Cache{})
 }
 
 func (g GormCacheRepository) Save(key string, value map[string]string, expireTime time.Duration) error {
-	var c CacheTable
+	var c Cache
 	c.Key = key
 	c.Expire = time.Now().Add(expireTime)
 
@@ -60,14 +60,14 @@ func (g GormCacheRepository) Save(key string, value map[string]string, expireTim
 }
 
 func (g GormCacheRepository) DeleteExpiredRecords() {
-	if err := g.DB.Where("expire < ?", time.Now()).Delete(&CacheTable{}).Error; err != nil {
+	if err := g.DB.Where("expire < ?", time.Now()).Delete(&Cache{}).Error; err != nil {
 		slog.Error("cannot delete expired records", "error", err)
 	}
 }
 
 func (g GormCacheRepository) Get(key string) (map[string]string, time.Time, error) {
-	var c CacheTable
-	if err := g.DB.First(&c, CacheTable{Key: key}).Error; err != nil {
+	var c Cache
+	if err := g.DB.First(&c, Cache{Key: key}).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, c.Expire, database_errors.ErrRecordNotFound
 		}
@@ -85,7 +85,7 @@ func (g GormCacheRepository) Get(key string) (map[string]string, time.Time, erro
 }
 
 func (g GormCacheRepository) Delete(key string) error {
-	if err := g.DB.Delete(&CacheTable{}, &CacheTable{Key: key}).Error; err != nil {
+	if err := g.DB.Delete(&Cache{}, &Cache{Key: key}).Error; err != nil {
 		return err
 	}
 

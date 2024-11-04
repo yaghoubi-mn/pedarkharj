@@ -92,6 +92,7 @@ func (s *service) SendOTP(input SendOTPInput) (responseDTO datatypes.ResponseDTO
 		verifyInfo := make(map[string]string)
 		verifyInfo["token"] = token.String()
 		verifyInfo["otp"] = strconv.Itoa(otp)
+		verifyInfo["mode"] = "verify"
 
 		err = s.cacheRepo.Save(input.Number, verifyInfo, config.VerifyNumberCacheExpireTime)
 		if err != nil {
