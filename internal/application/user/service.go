@@ -334,12 +334,6 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		return responseDTO
 	}
 
-	// delete cache
-	if err := s.cacheRepo.Delete(userInput.Number); err != nil {
-		responseDTO.ServerErr = err
-		return responseDTO
-	}
-
 	// select random avatar for user
 	// get list of avatars
 	avatars, err := s3.GetListObjects(config.AvatarPath)
@@ -389,6 +383,13 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		RefreshToken: tokens["refresh"],
 	})
 	if err != nil {
+		responseDTO.ServerErr = err
+		return responseDTO
+	}
+
+	// after signup uesr must be wait until number delay
+	verifyInfo["mode"] = "done"
+	if err := s.cacheRepo.Save(userInput.Number, verifyInfo, config.VerifyNumberCacheExpireTimeForNumberDelay); err != nil {
 		responseDTO.ServerErr = err
 		return responseDTO
 	}
@@ -464,7 +465,12 @@ func (s *service) ResetPassword(input RestPasswordInput) (responseDTO datatypes.
 		return
 	}
 
-	s.cacheRepo.Delete(input.Number)
+	// user must be wait until number delay
+	verifyInfo["mode"] = "done"
+	if err = s.cacheRepo.Save(input.Number, verifyInfo, config.VerifyNumberCacheExpireTimeForNumberDelay); err != nil {
+		responseDTO.ServerErr = err
+		return
+	}
 
 	tokens, err := jwt.CreateRefreshAndAccessFromUserWithMap(config.JWtRefreshExpire, config.JWTAccessExpire, user.ID, user.Name, user.Number, user.IsRegistered)
 	if err != nil {
