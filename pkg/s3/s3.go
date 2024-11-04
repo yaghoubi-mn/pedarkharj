@@ -24,6 +24,7 @@ var (
 	s3Client *s3.S3
 )
 
+// use manual init because env variable must be loaded
 func Init() {
 
 	accessKey = os.Getenv("S3_ACCESS_KEY")
@@ -32,6 +33,22 @@ func Init() {
 	apiUrlValue = os.Getenv("S3_API_URL_VALUE")
 	accessUrl = os.Getenv("S3_ACCESS_URL")
 	accessUrlProtocol = os.Getenv("S3_ACCESS_URL_PROTOCOL")
+
+	if accessKey == "" || secretKey == "" || bucketName == "" || apiUrlValue == "" || accessUrl == "" || accessUrlProtocol == "" {
+		printIfEmpty := func(name, value string) {
+			if value == "" {
+				slog.Error("cannot get env variable for s3", "error", name+" is empty")
+			}
+		}
+
+		printIfEmpty("access key", accessKey)
+		printIfEmpty("secret key", secretKey)
+		printIfEmpty("bucket name", bucketName)
+		printIfEmpty("api url value", apiUrlValue)
+		printIfEmpty("access url", accessUrl)
+		printIfEmpty("access url protocol", accessUrlProtocol)
+
+	}
 
 	s3Config := &aws.Config{
 		Credentials:      credentials.NewStaticCredentials(accessKey, secretKey, ""),
