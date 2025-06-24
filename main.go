@@ -82,6 +82,7 @@ func main() {
 	// setup jwt
 	if jwtSecretKey := os.Getenv("JWT_SECRET_KEY"); jwtSecretKey == "" {
 		slog.Error("JWT_SECRET_KEY not found in ENV")
+		os.Exit(1)
 	} else {
 		jwt.Init(jwtSecretKey)
 	}
@@ -92,8 +93,9 @@ func main() {
 		slog.Info("listening at http://127.0.0.1:2222")
 		slog.Error(http.ListenAndServe(":2222", mux).Error())
 	} else {
-		slog.Info("listening at http://127.0.0.1:1111")
-		slog.Error(http.ListenAndServe(":1111", mux).Error())
+		slog.Info("Swagger: http://127.0.0.1:8000/swagger/index.html")
+		slog.Info("listening at http://127.0.0.1:8000")
+		slog.Error(http.ListenAndServe(":8000", mux).Error())
 
 	}
 }
