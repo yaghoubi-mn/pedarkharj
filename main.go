@@ -11,13 +11,13 @@ import (
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
 	domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
+	domain_shared "github.com/yaghoubi-mn/pedarkharj/internal/domain/shared"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 	_ "github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/config"
 	gorm_repository "github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/repository/gorm"
 	interfaces_rest_v1 "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/cache"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/database"
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/s3"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
@@ -100,7 +100,7 @@ func main() {
 	}
 }
 
-func setupRouter(db *gorm.DB, validatorIns datatypes.Validator, cacheRepo datatypes.CacheRepository) *http.ServeMux {
+func setupRouter(db *gorm.DB, validatorIns domain_shared.Validator, cacheRepo domain_shared.CacheRepository) *http.ServeMux {
 
 	// setup domain
 	userDomainService := domain_user.NewUserService(validatorIns)

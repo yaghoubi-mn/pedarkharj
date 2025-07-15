@@ -4,15 +4,15 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
+	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/interfaces_rest_v1_shared"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
 )
 
 type jsonMiddleware struct {
-	response datatypes.Response
+	response interfaces_rest_v1_shared.Response
 }
 
-func NewJsonMiddleware(response datatypes.Response) jsonMiddleware {
+func NewJsonMiddleware(response interfaces_rest_v1_shared.Response) jsonMiddleware {
 	return jsonMiddleware{
 		response: response,
 	}

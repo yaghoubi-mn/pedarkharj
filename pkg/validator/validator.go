@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	validator_lib "github.com/go-playground/validator/v10"
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 )
 
 var (
@@ -23,7 +22,7 @@ type validate struct {
 	validator *validator_lib.Validate
 }
 
-func NewValidator() datatypes.Validator {
+func NewValidator() *validate {
 	vald := validator_lib.New()
 
 	vald.RegisterValidation("name", func(fl validator_lib.FieldLevel) bool {

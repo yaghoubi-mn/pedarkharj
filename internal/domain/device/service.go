@@ -3,7 +3,7 @@ package domain_device
 import (
 	"time"
 
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
+	"github.com/yaghoubi-mn/pedarkharj/internal/domain/shared"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/service_errors"
 )
 
@@ -15,10 +15,10 @@ type DeviceDomainService interface {
 }
 
 type service struct {
-	validator datatypes.Validator
+	validator domain_shared.Validator
 }
 
-func NewDeviceService(validator datatypes.Validator) DeviceDomainService {
+func NewDeviceService(validator domain_shared.Validator) DeviceDomainService {
 	return &service{
 		validator: validator,
 	}

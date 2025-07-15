@@ -1,10 +1,4 @@
-package datatypes
-
-type EmptyStruct struct{}
-
-func (e *EmptyStruct) Table() string {
-	return ""
-}
+package app_shared
 
 type ResponseDTO struct {
 	UserErr      error

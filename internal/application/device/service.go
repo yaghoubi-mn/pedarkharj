@@ -3,17 +3,17 @@ package app_device
 import (
 	"errors"
 
+	"github.com/yaghoubi-mn/pedarkharj/internal/application/shared"
 	domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 )
 
 type DeviceAppService interface {
 	CreateOrUpdate(deviceInput domain_device.DeviceInput) error
 	GetDeviceUserByRefreshToken(refresh string) (user domain_user.User, userErr error, serverErr error)
-	Logout(userID uint64, deviceName string) datatypes.ResponseDTO
-	LogoutAllUserDevices(userID uint64) datatypes.ResponseDTO
+	Logout(userID uint64, deviceName string) app_shared.ResponseDTO
+	LogoutAllUserDevices(userID uint64) app_shared.ResponseDTO
 }
 
 type service struct {
@@ -56,7 +56,7 @@ func (s *service) GetDeviceUserByRefreshToken(refresh string) (user domain_user.
 
 }
 
-func (s *service) Logout(userID uint64, deviceName string) (responseDTO datatypes.ResponseDTO) {
+func (s *service) Logout(userID uint64, deviceName string) (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	err := s.domainService.Logout(userID, deviceName)
@@ -72,7 +72,7 @@ func (s *service) Logout(userID uint64, deviceName string) (responseDTO datatype
 
 }
 
-func (s *service) LogoutAllUserDevices(userID uint64) (responseDTO datatypes.ResponseDTO) {
+func (s *service) LogoutAllUserDevices(userID uint64) (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	err := s.domainService.LogoutAllUserDevices(userID)

@@ -6,16 +6,16 @@ import (
 
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
+	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/interfaces_rest_v1_shared"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 )
 
 type Handler struct {
 	appService app_device.DeviceAppService
-	response   datatypes.Response
+	response   interfaces_rest_v1_shared.Response
 }
 
-func NewHandler(appService app_device.DeviceAppService, response datatypes.Response) Handler {
+func NewHandler(appService app_device.DeviceAppService, response interfaces_rest_v1_shared.Response) Handler {
 	return Handler{
 		appService: appService,
 		response:   response,

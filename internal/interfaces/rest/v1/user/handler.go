@@ -6,16 +6,16 @@ import (
 	"net/http"
 
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
+	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/interfaces_rest_v1_shared"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 )
 
 type Handler struct {
 	appService app_user.UserAppService
-	response   datatypes.Response
+	response   interfaces_rest_v1_shared.Response
 }
 
-func NewHandler(appService app_user.UserAppService, response datatypes.Response) Handler {
+func NewHandler(appService app_user.UserAppService, response interfaces_rest_v1_shared.Response) Handler {
 	return Handler{
 		appService: appService,
 		response:   response,

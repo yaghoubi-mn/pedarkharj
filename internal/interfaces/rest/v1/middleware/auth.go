@@ -8,16 +8,16 @@ import (
 	"strings"
 
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
+	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/interfaces_rest_v1_shared"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
 )
 
 type authMiddleware struct {
-	response datatypes.Response
+	response interfaces_rest_v1_shared.Response
 }
 
-func NewAuthMiddleware(response datatypes.Response) authMiddleware {
+func NewAuthMiddleware(response interfaces_rest_v1_shared.Response) authMiddleware {
 	return authMiddleware{
 		response: response,
 	}

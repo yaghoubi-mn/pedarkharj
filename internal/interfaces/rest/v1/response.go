@@ -7,17 +7,18 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
+	app_shared "github.com/yaghoubi-mn/pedarkharj/internal/application/shared"
+	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/interfaces_rest_v1_shared"
 )
 
 type jsonResponse struct {
 }
 
-func NewJSONResponse() datatypes.Response {
+func NewJSONResponse() interfaces_rest_v1_shared.Response {
 	return &jsonResponse{}
 }
 
-func (j *jsonResponse) Response(w http.ResponseWriter, status int, code string, mapData datatypes.Map) {
+func (j *jsonResponse) Response(w http.ResponseWriter, status int, code string, mapData map[string]any) {
 	mapData["code"] = code
 	mapData["status"] = status
 
@@ -33,22 +34,22 @@ func (j *jsonResponse) Response(w http.ResponseWriter, status int, code string, 
 }
 
 func (j *jsonResponse) StructResponse(w http.ResponseWriter, status int, code string, data any) {
-	outData := make(datatypes.Map)
+	outData := make(map[string]any)
 	outData["data"] = data
 	j.Response(w, status, code, outData)
 }
 
 // errs example: "name: invalid name"
-func (j *jsonResponse) ErrorResponse(w http.ResponseWriter, status int, code string, data datatypes.Map, errs ...error) {
+func (j *jsonResponse) ErrorResponse(w http.ResponseWriter, status int, code string, data map[string]any, errs ...error) {
 	if errs == nil {
 		slog.Error("err is required in JSONErrorResponse")
 	}
 
 	if data == nil {
-		data = make(datatypes.Map)
+		data = make(map[string]any)
 	}
 
-	data["errors"] = datatypes.Map{}
+	data["errors"] = map[string]any{}
 
 	temp := make(map[string]string)
 
@@ -69,11 +70,11 @@ func (j *jsonResponse) ErrorResponse(w http.ResponseWriter, status int, code str
 
 func (j *jsonResponse) ServerErrorResponse(w http.ResponseWriter, err error) {
 	slog.Error("SERVER ERROR", "error", err.Error())
-	j.Response(w, http.StatusInternalServerError, "", datatypes.Map{"msg": "Server error"})
+	j.Response(w, http.StatusInternalServerError, "", map[string]any{"msg": "Server error"})
 }
 
 // check ServerErr and UserErr
-func (j *jsonResponse) DTOErrorResponse(w http.ResponseWriter, responseDTO datatypes.ResponseDTO) {
+func (j *jsonResponse) DTOErrorResponse(w http.ResponseWriter, responseDTO app_shared.ResponseDTO) {
 
 	if responseDTO.ServerErr != nil {
 		j.ServerErrorResponse(w, responseDTO.ServerErr)

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/yaghoubi-mn/pedarkharj/pkg/database_errors"
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -22,7 +21,7 @@ type GormCacheRepository struct {
 	DB *gorm.DB
 }
 
-func New(db *gorm.DB) datatypes.CacheRepository {
+func New(db *gorm.DB) GormCacheRepository {
 
 	return GormCacheRepository{
 		DB: db,
@@ -75,7 +74,7 @@ func (g GormCacheRepository) Get(key string) (map[string]string, time.Time, erro
 	}
 
 	// check expire
-	if c.Expire.Sub(time.Now()).Seconds() < 0 {
+	if time.Until(c.Expire).Seconds() < 0 {
 		return nil, c.Expire, database_errors.ErrExpired
 	}
 
