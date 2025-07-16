@@ -23,12 +23,14 @@ func NewHandler(appService app_device.DeviceAppService, response interfaces_rest
 }
 
 // Logout godoc
-// @Description logout current user device
+// @Summary Logout current device
+// @Description Logout current user device
 // @Tags devices
+// @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Success 200
-// @Failure 500
+// @Success 200 {object} map[string]interface{} "Successfully logged out"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /devices/logout [post]
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 
@@ -55,12 +57,14 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 // LogoutAllUserDevices godoc
-// @Description logout all user devices
+// @Summary Logout all user devices
+// @Description Logout all user devices
 // @Tags devices
+// @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Success 200
-// @Failure 500
+// @Success 200 {object} map[string]interface{} "Successfully logged out from all devices"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /devices/logout-all [post]
 func (h *Handler) LogoutAllUserDevices(w http.ResponseWriter, r *http.Request) {
 

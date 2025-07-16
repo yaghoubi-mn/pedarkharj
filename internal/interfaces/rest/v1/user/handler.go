@@ -220,13 +220,15 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetUserInfo godoc
-// @Description get user info (Authentication Required)
+// @Summary Get user information
+// @Description Get authenticated user's profile (Authentication Required)
 // @Tags users
+// @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Success 200
-// @Failure 401
-// @Failure 500
+// @Success 200 {object} map[string]interface{} "User information"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /users/info [get]
 func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 
@@ -248,14 +250,15 @@ func (h *Handler) GetUserInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // CheckNumber godoc
-// @Description Check number is exist
+// @Summary Check number existence
+// @Description Check if phone number is registered
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param number body string true "phone number" example(+98123456789)
-// @Success 200
-// @Failure 500
-// @Failure 400 "BadRequest:<br>code=invalid_field"
+// @Param input body app_user.NumberInput true "Phone number to check"
+// @Success 200 {object} map[string]interface{} "Number status"
+// @Failure 400 {object} map[string]interface{} "Invalid input"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /users/check-number [post]
 func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
 
@@ -279,15 +282,16 @@ func (h *Handler) CheckNumber(w http.ResponseWriter, r *http.Request) {
 	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
 
-// GetAccessFromRefersh godoc
-// @Description Get access token with refresh token
+// GetAccessFromRefresh godoc
+// @Summary Refresh access token
+// @Description Get new access token using refresh token
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param refresh body string true "refresh"
-// @Success 200
-// @Failure 500
-// @Failure 400 "BadRequest:<br>code=invalid_field"
+// @Param input body app_user.RefreshInput true "Refresh token"
+// @Success 200 {object} map[string]interface{} "New access token"
+// @Failure 400 {object} map[string]interface{} "Invalid token"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /users/refresh [post]
 func (h *Handler) GetAccessFromRefresh(w http.ResponseWriter, r *http.Request) {
 
@@ -311,15 +315,17 @@ func (h *Handler) GetAccessFromRefresh(w http.ResponseWriter, r *http.Request) {
 	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
 
-// GetAccessFromRefersh godoc
-// @Description Choose user avatar
+// ChooseUserAvatar godoc
+// @Summary Choose user avatar
+// @Description Set user's avatar image
 // @Tags users
+// @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param avatar body string true "Avatar URL"
-// @Success 200
-// @Failure 500
-// @Failure 400 "BadRequest:<br>code=invalid_field"
+// @Param input body app_user.AvatarChooseInput true "Avatar URL"
+// @Success 200 {object} map[string]interface{} "Avatar updated"
+// @Failure 400 {object} map[string]interface{} "Invalid input"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /users/avatar [post]
 func (h *Handler) ChooseUserAvatar(w http.ResponseWriter, r *http.Request) {
 
@@ -354,13 +360,14 @@ func (h *Handler) ChooseUserAvatar(w http.ResponseWriter, r *http.Request) {
 	h.response.Response(w, 200, responseDTO.ResponseCode, responseDTO.Data)
 }
 
-// GetAccessFromRefersh godoc
-// @Description Get list of avatars
+// GetAvatars godoc
+// @Summary Get available avatars
+// @Description Get list of available avatar images
 // @Tags users
 // @Accept json
 // @Produce json
-// @Success 200
-// @Failure 500
+// @Success 200 {object} map[string]interface{} "List of avatars"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
 // @Router /users/avatar [get]
 func (h *Handler) GetAvatars(w http.ResponseWriter, r *http.Request) {
 

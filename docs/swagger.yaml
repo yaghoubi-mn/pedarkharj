@@ -1,4 +1,24 @@
 basePath: /api/v1
+definitions:
+  app_user.AvatarChooseInput:
+    properties:
+      avatar:
+        type: string
+    type: object
+  app_user.NumberInput:
+    properties:
+      number:
+        type: string
+    required:
+    - number
+    type: object
+  app_user.RefreshInput:
+    properties:
+      refresh:
+        type: string
+    required:
+    - refresh
+    type: object
 host: localhost:1111
 info:
   contact: {}
@@ -10,104 +30,162 @@ paths:
     post:
       consumes:
       - application/json
-      description: logout current user device
+      description: Logout current user device
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully logged out
+          schema:
+            additionalProperties: true
+            type: object
         "500":
-          description: Internal Server Error
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Logout current device
       tags:
       - devices
   /devices/logout-all:
     post:
       consumes:
       - application/json
-      description: logout all user devices
+      description: Logout all user devices
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully logged out from all devices
+          schema:
+            additionalProperties: true
+            type: object
         "500":
-          description: Internal Server Error
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Logout all user devices
       tags:
       - devices
   /users/avatar:
     get:
       consumes:
       - application/json
-      description: Get list of avatars
+      description: Get list of available avatar images
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: List of avatars
+          schema:
+            additionalProperties: true
+            type: object
         "500":
-          description: Internal Server Error
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get available avatars
       tags:
       - users
     post:
       consumes:
       - application/json
-      description: Choose user avatar
+      description: Set user's avatar image
       parameters:
       - description: Avatar URL
         in: body
-        name: avatar
+        name: input
         required: true
         schema:
-          type: string
+          $ref: '#/definitions/app_user.AvatarChooseInput'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Avatar updated
+          schema:
+            additionalProperties: true
+            type: object
         "400":
-          description: BadRequest:<br>code=invalid_field
+          description: Invalid input
+          schema:
+            additionalProperties: true
+            type: object
         "500":
-          description: Internal Server Error
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Choose user avatar
       tags:
       - users
   /users/check-number:
     post:
       consumes:
       - application/json
-      description: Check number is exist
+      description: Check if phone number is registered
       parameters:
-      - description: phone number
-        example: "+98123456789"
+      - description: Phone number to check
         in: body
-        name: number
+        name: input
         required: true
         schema:
-          type: string
+          $ref: '#/definitions/app_user.NumberInput'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Number status
+          schema:
+            additionalProperties: true
+            type: object
         "400":
-          description: BadRequest:<br>code=invalid_field
+          description: Invalid input
+          schema:
+            additionalProperties: true
+            type: object
         "500":
-          description: Internal Server Error
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Check number existence
       tags:
       - users
   /users/info:
     get:
       consumes:
       - application/json
-      description: get user info (Authentication Required)
+      description: Get authenticated user's profile (Authentication Required)
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: User information
+          schema:
+            additionalProperties: true
+            type: object
         "401":
           description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
         "500":
-          description: Internal Server Error
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user information
       tags:
       - users
   /users/login:
@@ -144,23 +222,33 @@ paths:
     post:
       consumes:
       - application/json
-      description: Get access token with refresh token
+      description: Get new access token using refresh token
       parameters:
-      - description: refresh
+      - description: Refresh token
         in: body
-        name: refresh
+        name: input
         required: true
         schema:
-          type: string
+          $ref: '#/definitions/app_user.RefreshInput'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: New access token
+          schema:
+            additionalProperties: true
+            type: object
         "400":
-          description: BadRequest:<br>code=invalid_field
+          description: Invalid token
+          schema:
+            additionalProperties: true
+            type: object
         "500":
-          description: Internal Server Error
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Refresh access token
       tags:
       - users
   /users/reset-password:

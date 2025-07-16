@@ -17,7 +17,12 @@ const docTemplate = `{
     "paths": {
         "/devices/logout": {
             "post": {
-                "description": "logout current user device",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Logout current user device",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,19 +32,33 @@ const docTemplate = `{
                 "tags": [
                     "devices"
                 ],
+                "summary": "Logout current device",
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "Successfully logged out",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     }
                 }
             }
         },
         "/devices/logout-all": {
             "post": {
-                "description": "logout all user devices",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Logout all user devices",
                 "consumes": [
                     "application/json"
                 ],
@@ -49,19 +68,28 @@ const docTemplate = `{
                 "tags": [
                     "devices"
                 ],
+                "summary": "Logout all user devices",
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "Successfully logged out from all devices",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     }
                 }
             }
         },
         "/users/avatar": {
             "get": {
-                "description": "Get list of avatars",
+                "description": "Get list of available avatar images",
                 "consumes": [
                     "application/json"
                 ],
@@ -71,17 +99,31 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
+                "summary": "Get available avatars",
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "List of avatars",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     }
                 }
             },
             "post": {
-                "description": "Choose user avatar",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Set user's avatar image",
                 "consumes": [
                     "application/json"
                 ],
@@ -91,33 +133,46 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
+                "summary": "Choose user avatar",
                 "parameters": [
                     {
                         "description": "Avatar URL",
-                        "name": "avatar",
+                        "name": "input",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/app_user.AvatarChooseInput"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "Avatar updated",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "400": {
-                        "description": "BadRequest:\u003cbr\u003ecode=invalid_field"
+                        "description": "Invalid input",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     }
                 }
             }
         },
         "/users/check-number": {
             "post": {
-                "description": "Check number is exist",
+                "description": "Check if phone number is registered",
                 "consumes": [
                     "application/json"
                 ],
@@ -127,34 +182,51 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
+                "summary": "Check number existence",
                 "parameters": [
                     {
-                        "example": "+98123456789",
-                        "description": "phone number",
-                        "name": "number",
+                        "description": "Phone number to check",
+                        "name": "input",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/app_user.NumberInput"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "Number status",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "400": {
-                        "description": "BadRequest:\u003cbr\u003ecode=invalid_field"
+                        "description": "Invalid input",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     }
                 }
             }
         },
         "/users/info": {
             "get": {
-                "description": "get user info (Authentication Required)",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get authenticated user's profile (Authentication Required)",
                 "consumes": [
                     "application/json"
                 ],
@@ -164,15 +236,28 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
+                "summary": "Get user information",
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "User information",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "401": {
-                        "description": "Unauthorized"
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     }
                 }
             }
@@ -225,7 +310,7 @@ const docTemplate = `{
         },
         "/users/refresh": {
             "post": {
-                "description": "Get access token with refresh token",
+                "description": "Get new access token using refresh token",
                 "consumes": [
                     "application/json"
                 ],
@@ -235,26 +320,39 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
+                "summary": "Refresh access token",
                 "parameters": [
                     {
-                        "description": "refresh",
-                        "name": "refresh",
+                        "description": "Refresh token",
+                        "name": "input",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/app_user.RefreshInput"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "New access token",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "400": {
-                        "description": "BadRequest:\u003cbr\u003ecode=invalid_field"
+                        "description": "Invalid token",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error"
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     }
                 }
             }
@@ -479,6 +577,38 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error"
                     }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "app_user.AvatarChooseInput": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                }
+            }
+        },
+        "app_user.NumberInput": {
+            "type": "object",
+            "required": [
+                "number"
+            ],
+            "properties": {
+                "number": {
+                    "type": "string"
+                }
+            }
+        },
+        "app_user.RefreshInput": {
+            "type": "object",
+            "required": [
+                "refresh"
+            ],
+            "properties": {
+                "refresh": {
+                    "type": "string"
                 }
             }
         }
