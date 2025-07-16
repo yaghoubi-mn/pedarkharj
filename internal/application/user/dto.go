@@ -9,7 +9,7 @@ import (
 type JWTUser struct {
 	ID           uint64
 	Name         string
-	Number       string
+	PhoneNumber  string
 	IsRegistered bool
 }
 
@@ -69,8 +69,8 @@ type AvatarChooseInput struct {
 	shared_dto.AvatarChooseInput
 }
 
-type RestPasswordInput struct {
-	shared_dto.RestPasswordInput
+type ResetPasswordInput struct {
+	shared_dto.ResetPasswordInput
 }
 
 // func (r RestPasswordInput) GetDomainStruct() domain_user.RestPasswordInput {

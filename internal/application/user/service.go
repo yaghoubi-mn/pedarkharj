@@ -36,7 +36,7 @@ type UserAppService interface {
 	GetAccessFromRefresh(refresh string) (responseDTO app_shared.ResponseDTO)
 	ChooseUserAvatar(avatarName string, userID uint64) app_shared.ResponseDTO
 	GetAvatars() app_shared.ResponseDTO
-	ResetPassword(input RestPasswordInput) app_shared.ResponseDTO
+	ResetPassword(input ResetPasswordInput) app_shared.ResponseDTO
 }
 
 type service struct {
@@ -62,14 +62,14 @@ func (s *service) SendOTP(input SendOTPInput) (responseDTO app_shared.ResponseDT
 
 	// isBlocked will checked in step 2
 
-	userErr := s.domainService.SendOTP(domain_user.NewSendOTPInput(input.Number))
+	userErr := s.domainService.SendOTP(domain_user.NewSendOTPInput(input.PhoneNumber))
 	if userErr != nil {
 		responseDTO.UserErr = userErr
 		responseDTO.ResponseCode = rcodes.InvalidField
 		return responseDTO
 	}
 
-	_, expireTime, err := s.cacheRepo.Get(input.Number)
+	_, expireTime, err := s.cacheRepo.Get(input.PhoneNumber)
 
 	delayTime := expireTime.Add(config.VerifyNumberCacheExpireTimeForNumberDelay).Sub(time.Now().Add(config.VerifyNumberCacheExpireTime))
 	if err == database_errors.ErrExpired || err == database_errors.ErrRecordNotFound || delayTime.Seconds() <= 0 {
@@ -81,7 +81,7 @@ func (s *service) SendOTP(input SendOTPInput) (responseDTO app_shared.ResponseDT
 		if config.Debug == false {
 
 			// send code to number
-			err = sms.SendOTPSMS(input.Number[3:], otp)
+			err = sms.SendOTPSMS(input.PhoneNumber[3:], otp)
 			if err != nil {
 				responseDTO.ServerErr = err
 				return responseDTO
@@ -93,7 +93,7 @@ func (s *service) SendOTP(input SendOTPInput) (responseDTO app_shared.ResponseDT
 		verifyInfo["otp"] = strconv.Itoa(otp)
 		verifyInfo["mode"] = "verify"
 
-		err = s.cacheRepo.Save(input.Number, verifyInfo, config.VerifyNumberCacheExpireTime)
+		err = s.cacheRepo.Save(input.PhoneNumber, verifyInfo, config.VerifyNumberCacheExpireTime)
 		if err != nil {
 			responseDTO.ServerErr = err
 			return responseDTO
@@ -129,7 +129,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 
 	userErr, serverErr := s.domainService.VerifyOTP(
 		domain_user.NewVerifyOTPInput(
-			verifyNumberInput.Number,
+			verifyNumberInput.PhoneNumber,
 			verifyNumberInput.OTP,
 			verifyNumberInput.Token,
 			verifyNumberInput.Mode,
@@ -145,7 +145,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 		return 0, responseDTO
 	}
 
-	verifyInfo, _, err := s.cacheRepo.Get(verifyNumberInput.Number)
+	verifyInfo, _, err := s.cacheRepo.Get(verifyNumberInput.PhoneNumber)
 
 	if err != nil {
 		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
@@ -190,7 +190,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 	if otp == strconv.Itoa(int(verifyNumberInput.OTP)) {
 
 		// get user
-		user, databaseErr := s.repo.GetByNumber(verifyNumberInput.Number)
+		user, databaseErr := s.repo.GetByNumber(verifyNumberInput.PhoneNumber)
 
 		var isUserRegistered bool
 		isUserExist := true
@@ -226,7 +226,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 			verifyInfo["is_user_exist"] = strconv.FormatBool(isUserExist)
 
 			// save number and token to cache for signup
-			err = s.cacheRepo.Save(verifyNumberInput.Number, verifyInfo, config.VerifyNumberCacheExpireTime)
+			err = s.cacheRepo.Save(verifyNumberInput.PhoneNumber, verifyInfo, config.VerifyNumberCacheExpireTime)
 			if err != nil {
 				responseDTO.ServerErr = err
 				return 0, responseDTO
@@ -256,7 +256,7 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 			verifyInfo["mode"] = "reset_password"
 			verifyInfo["is_user_exist"] = strconv.FormatBool(isUserExist)
 
-			err := s.cacheRepo.Save(verifyNumberInput.Number, verifyInfo, config.VerifyNumberCacheExpireTime)
+			err := s.cacheRepo.Save(verifyNumberInput.PhoneNumber, verifyInfo, config.VerifyNumberCacheExpireTime)
 			if err != nil {
 				responseDTO.ServerErr = err
 				return 0, responseDTO
@@ -281,7 +281,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 	// call domain service
 	user, userErr, serverErr := s.domainService.Signup(
 		domain_user.NewSignupUserInput(
-			userInput.Number,
+			userInput.PhoneNumber,
 			userInput.Name,
 			userInput.Password,
 			userInput.Token,
@@ -297,7 +297,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 		return responseDTO
 	}
 
-	verifyInfo, _, err := s.cacheRepo.Get(userInput.Number)
+	verifyInfo, _, err := s.cacheRepo.Get(userInput.PhoneNumber)
 	if err != nil {
 		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
 
@@ -393,7 +393,7 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 
 	// after signup uesr must be wait until number delay
 	verifyInfo["mode"] = "done"
-	if err := s.cacheRepo.Save(userInput.Number, verifyInfo, config.VerifyNumberCacheExpireTime); err != nil {
+	if err := s.cacheRepo.Save(userInput.PhoneNumber, verifyInfo, config.VerifyNumberCacheExpireTime); err != nil {
 		responseDTO.ServerErr = err
 		return responseDTO
 	}
@@ -403,12 +403,12 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 	return responseDTO
 }
 
-func (s *service) ResetPassword(input RestPasswordInput) (responseDTO app_shared.ResponseDTO) {
+func (s *service) ResetPassword(input ResetPasswordInput) (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	userErr, serverErr, salt, hashedPassword := s.domainService.ResetPassword(
 		domain_user.NewResetPasswordInput(
-			input.Number,
+			input.PhoneNumber,
 			input.Password,
 			input.Token,
 		))
@@ -422,7 +422,7 @@ func (s *service) ResetPassword(input RestPasswordInput) (responseDTO app_shared
 		return
 	}
 
-	verifyInfo, _, err := s.cacheRepo.Get(input.Number)
+	verifyInfo, _, err := s.cacheRepo.Get(input.PhoneNumber)
 	if err != nil {
 		if err == database_errors.ErrRecordNotFound || err == database_errors.ErrExpired {
 
@@ -456,7 +456,7 @@ func (s *service) ResetPassword(input RestPasswordInput) (responseDTO app_shared
 		return
 	}
 
-	user, err := s.repo.GetByNumber(input.Number)
+	user, err := s.repo.GetByNumber(input.PhoneNumber)
 	if err != nil {
 		responseDTO.ServerErr = err
 		return
@@ -473,7 +473,7 @@ func (s *service) ResetPassword(input RestPasswordInput) (responseDTO app_shared
 
 	// user must be wait until number delay
 	verifyInfo["mode"] = "done"
-	if err = s.cacheRepo.Save(input.Number, verifyInfo, config.VerifyNumberCacheExpireTime); err != nil {
+	if err = s.cacheRepo.Save(input.PhoneNumber, verifyInfo, config.VerifyNumberCacheExpireTime); err != nil {
 		responseDTO.ServerErr = err
 		return
 	}
@@ -509,14 +509,14 @@ func (s *service) GetUserInfo(userID uint64) (responseDTO app_shared.ResponseDTO
 func (s *service) CheckNumber(numberInput NumberInput) (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
-	err := s.domainService.CheckNumber(numberInput.Number)
+	err := s.domainService.CheckNumber(numberInput.PhoneNumber)
 	if err != nil {
 		responseDTO.UserErr = err
 		responseDTO.ResponseCode = rcodes.InvalidField
 		return responseDTO
 	}
 
-	user, err := s.repo.GetByNumber(numberInput.Number)
+	user, err := s.repo.GetByNumber(numberInput.PhoneNumber)
 	isExist := false
 	if err != nil {
 		if err == database_errors.ErrRecordNotFound {
@@ -543,12 +543,12 @@ func (s *service) CheckNumber(numberInput NumberInput) (responseDTO app_shared.R
 func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
-	if err := s.domainService.CheckNumber(loginInput.Number); err != nil {
+	if err := s.domainService.CheckNumber(loginInput.PhoneNumber); err != nil {
 		responseDTO.UserErr = err
 		return
 	}
 
-	user, err := s.repo.GetByNumber(loginInput.Number)
+	user, err := s.repo.GetByNumber(loginInput.PhoneNumber)
 	if err != nil {
 		if err == database_errors.ErrRecordNotFound {
 			responseDTO.ResponseCode = rcodes.NumberNotExist
@@ -562,7 +562,7 @@ func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP s
 
 	userErr, serverErr := s.domainService.Login(
 		domain_user.NewLoginUserInput(
-			loginInput.Number,
+			loginInput.PhoneNumber,
 			loginInput.InputPassword,
 			user.Password,
 			user.Salt,

@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
-	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/shared"
+	interfaces_rest_v1_shared "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/shared"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 )
 
@@ -199,7 +199,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Router /users/reset-password [post]
 func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
-	var input app_user.RestPasswordInput
+	var input app_user.ResetPasswordInput
 	// decode body
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()

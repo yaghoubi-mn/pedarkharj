@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
-	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/shared"
+	interfaces_rest_v1_shared "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/shared"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
 )
@@ -41,7 +41,7 @@ func (a *authMiddleware) EnsureAuthentication(next http.Handler) http.Handler {
 
 		var user app_user.JWTUser
 		var err error
-		user.ID, user.Name, user.Number, user.IsRegistered, err = jwt.GetUserFromAccess(access)
+		user.ID, user.Name, user.PhoneNumber, user.IsRegistered, err = jwt.GetUserFromAccess(access)
 		if err != nil {
 			fmt.Println("JWT ERROR:", err)
 			a.response.ErrorResponse(w, 401, rcodes.InvalidToken, nil, errors.New("authorization: invalid token"))

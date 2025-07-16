@@ -9,7 +9,7 @@ type SendOTPInput struct {
 func NewSendOTPInput(number string) SendOTPInput {
 	return SendOTPInput{
 		SendOTPInput: shared_dto.SendOTPInput{
-			Number: number,
+			PhoneNumber: number,
 		},
 	}
 }
@@ -21,10 +21,10 @@ type VerifyOTPInput struct {
 func NewVerifyOTPInput(number string, otp uint, token, mode string) VerifyOTPInput {
 	return VerifyOTPInput{
 		shared_dto.VerifyOTPInput{
-			Number: number,
-			OTP:    otp,
-			Token:  token,
-			Mode:   mode,
+			PhoneNumber: number,
+			OTP:         otp,
+			Token:       token,
+			Mode:        mode,
 		},
 	}
 }
@@ -36,7 +36,7 @@ type NumberInput struct {
 func NewNumberInput(number string) NumberInput {
 	return NumberInput{
 		shared_dto.NumberInput{
-			Number: number,
+			PhoneNumber: number,
 		},
 	}
 }
@@ -48,17 +48,17 @@ type SignupUserInput struct {
 func NewSignupUserInput(number, name, password, token string) SignupUserInput {
 	return SignupUserInput{
 		shared_dto.SignupUserInput{
-			Number:   number,
-			Name:     name,
-			Password: password,
-			Token:    token,
+			PhoneNumber: number,
+			Name:        name,
+			Password:    password,
+			Token:       token,
 		},
 	}
 }
 
 func (v SignupUserInput) GetUser() User {
 	return User{
-		Number:   v.Number,
+		Number:   v.PhoneNumber,
 		Name:     v.Name,
 		Password: v.Password,
 	}
@@ -76,7 +76,7 @@ type LoginUserInput struct {
 func NewLoginUserInput(number, password, storedPassword, salt string, isBlocked, isRegistered bool) LoginUserInput {
 	return LoginUserInput{
 		LoginUserInput: shared_dto.LoginUserInput{
-			Number:        number,
+			PhoneNumber:   number,
 			InputPassword: password,
 		},
 		StoredPassword: storedPassword,
@@ -110,16 +110,16 @@ func NewAvatarChooseInput(avatar string) AvatarChooseInput {
 	}
 }
 
-type RestPasswordInput struct {
-	shared_dto.RestPasswordInput
+type ResetPasswordInput struct {
+	shared_dto.ResetPasswordInput
 }
 
-func NewResetPasswordInput(number, password, token string) RestPasswordInput {
-	return RestPasswordInput{
-		shared_dto.RestPasswordInput{
-			Number:   number,
-			Password: password,
-			Token:    token,
+func NewResetPasswordInput(number, password, token string) ResetPasswordInput {
+	return ResetPasswordInput{
+		shared_dto.ResetPasswordInput{
+			PhoneNumber: number,
+			Password:    password,
+			Token:       token,
 		},
 	}
 }

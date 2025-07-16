@@ -15,7 +15,7 @@ type UserDomainService interface {
 	VerifyOTP(input VerifyOTPInput) (userError error, serverError error)
 	CheckNumber(number string) error
 	Login(input LoginUserInput) (userError, serverError error)
-	ResetPassword(input RestPasswordInput) (userErr, serverErr error, salt, outPassword string)
+	ResetPassword(input ResetPasswordInput) (userErr, serverErr error, salt, outPassword string)
 }
 
 type service struct {
@@ -30,7 +30,7 @@ func NewUserService(validator domain_shared.Validator) UserDomainService {
 
 func (s *service) SendOTP(input SendOTPInput) error {
 
-	if err := s.validator.ValidateFieldByFieldName("Number", input.Number, User{}); err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Number", input.PhoneNumber, User{}); err != nil {
 		return service_errors.ErrInvalidNumber
 	}
 
@@ -43,7 +43,7 @@ func (s *service) VerifyOTP(input VerifyOTPInput) (error, error) {
 	// 	return service_errors.ErrBlockedUser, nil
 	// }
 
-	if err := s.validator.ValidateFieldByFieldName("Number", input.Number, User{}); err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Number", input.PhoneNumber, User{}); err != nil {
 		return service_errors.ErrInvalidNumber, nil
 	}
 
@@ -69,7 +69,7 @@ func (s *service) Signup(input SignupUserInput) (User, error, error) {
 		return user, service_errors.ErrInvalidName, nil
 	}
 
-	if err := s.validator.ValidateFieldByFieldName("Number", input.Number, User{}); err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Number", input.PhoneNumber, User{}); err != nil {
 		return user, service_errors.ErrInvalidNumber, nil
 	}
 
@@ -107,9 +107,9 @@ func (s *service) Signup(input SignupUserInput) (User, error, error) {
 	return user, nil, nil
 }
 
-func (s *service) ResetPassword(input RestPasswordInput) (userErr, serverErr error, salt, outPassword string) {
+func (s *service) ResetPassword(input ResetPasswordInput) (userErr, serverErr error, salt, outPassword string) {
 
-	if err := s.validator.ValidateFieldByFieldName("Number", input.Number, User{}); err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Number", input.PhoneNumber, User{}); err != nil {
 		return service_errors.ErrInvalidNumber, nil, "", ""
 	}
 
@@ -158,7 +158,7 @@ func (s *service) Login(input LoginUserInput) (error, error) {
 		return service_errors.ErrWrongPassword, nil
 	}
 
-	if err := s.validator.ValidateFieldByFieldName("Number", input.Number, User{}); err != nil {
+	if err := s.validator.ValidateFieldByFieldName("Number", input.PhoneNumber, User{}); err != nil {
 		return service_errors.ErrInvalidNumber, nil
 	}
 
