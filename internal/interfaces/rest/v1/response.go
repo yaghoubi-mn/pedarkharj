@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	app_shared "github.com/yaghoubi-mn/pedarkharj/internal/application/shared"
-	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/interfaces_rest_v1_shared"
+	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/shared"
 )
 
 type jsonResponse struct {

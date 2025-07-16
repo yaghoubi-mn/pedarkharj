@@ -6,7 +6,7 @@ import (
 
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
-	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/interfaces_rest_v1_shared"
+	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/shared"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 )
 

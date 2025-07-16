@@ -3,6 +3,7 @@ package domain_shared
 import "time"
 
 type Validator interface {
+	Struct(st interface{}) map[string]string
 	ValidateField(v any, tag string) error
 	ValidateFieldByFieldName(fieldName string, fieldValue any, model any) error
 }

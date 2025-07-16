@@ -3,8 +3,8 @@ package domain_user
 import (
 	"time"
 
+	domain_shared "github.com/yaghoubi-mn/pedarkharj/internal/domain/shared"
 	"github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/config"
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/service_errors"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 )
@@ -19,10 +19,10 @@ type UserDomainService interface {
 }
 
 type service struct {
-	validator datatypes.Validator
+	validator domain_shared.Validator
 }
 
-func NewUserService(validator datatypes.Validator) UserDomainService {
+func NewUserService(validator domain_shared.Validator) UserDomainService {
 	return &service{
 		validator: validator,
 	}
@@ -154,7 +154,7 @@ func (s *service) Login(input LoginUserInput) (error, error) {
 		return service_errors.ErrBlockedUser, nil
 	}
 
-	if err := utils.CompareHashAndPassword(input.RealPassword, input.InputPassword, input.Salt); err != nil {
+	if err := utils.CompareHashAndPassword(input.StoredPassword, input.InputPassword, input.Salt); err != nil {
 		return service_errors.ErrWrongPassword, nil
 	}
 

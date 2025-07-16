@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 
 	validator_lib "github.com/go-playground/validator/v10"
@@ -35,7 +34,6 @@ func NewValidator() *validate {
 		return true
 
 	})
-	vald.RegisterValidation("allowempty", func(fl validator_lib.FieldLevel) bool { return true })
 	vald.RegisterValidation("phone_number", func(fl validator_lib.FieldLevel) bool {
 		ok, err := regexp.Match("\\+?9\\d{9}$", []byte(fl.Field().String()))
 		if err != nil {
@@ -58,36 +56,32 @@ func NewValidator() *validate {
 		return true
 	})
 
-	for i := 0; i < 1000; i += 5 {
-
-		vald.RegisterValidation("size:"+strconv.Itoa(i), func(fl validator_lib.FieldLevel) bool {
-			return len(fl.Field().String()) <= i
-		})
-	}
 	return &validate{
 		validator: vald,
 	}
 }
 
-func (v *validate) Struct(st interface{}) (fieldName string, err error) {
+func (v *validate) Struct(st interface{}) (errMap map[string]string) {
 	val := reflect.ValueOf(st)
 	if val.Kind() != reflect.Struct {
 		log.Fatalln("type of st is not struct")
 	}
 
-	for i := 0; i < val.NumField(); i++ {
-		// fieldName := val.Type().Field(i).Name
-		fieldValue := fmt.Sprintf("%v", val.Field(i))
-		fieldTag := val.Type().Field(i).Tag.Get("validate")
-		fieldNameJson := val.Type().Field(i).Tag.Get("json")
+	errMap = make(map[string]string)
 
-		if err := v.ValidateField(fieldValue, fieldTag); err != nil {
-			return fieldNameJson, err
+	errs := v.validator.Struct(st)
+	if errs != nil {
+		for _, err := range errs.(validator_lib.ValidationErrors) {
+			errMap[err.Field()] = err.Error()
 		}
-
 	}
 
-	return "", nil
+	if len(errMap) == 0 {
+		return nil
+
+	} else {
+		return errMap
+	}
 }
 
 func (v *validate) ValidateFieldByFieldName(fieldName string, fieldValue any, model any) error {

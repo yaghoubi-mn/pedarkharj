@@ -558,12 +558,12 @@ func TestLogin(t *testing.T) {
 	for _, tt := range tests {
 
 		userErr, serverErr := userService.Login(domain_user.LoginUserInput{
-			Number:        tt.Number,
-			InputPassword: tt.Password,
-			RealPassword:  tt.HashedPassword,
-			Salt:          salt,
-			IsRegistered:  tt.IsRegistered,
-			IsBlocked:     tt.IsBlocked,
+			Number:         tt.Number,
+			InputPassword:  tt.Password,
+			StoredPassword: tt.HashedPassword,
+			Salt:           salt,
+			IsRegistered:   tt.IsRegistered,
+			IsBlocked:      tt.IsBlocked,
 		})
 
 		assert.NoError(t, serverErr)

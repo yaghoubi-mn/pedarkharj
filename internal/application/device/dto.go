@@ -1,12 +1,12 @@
 package app_device
 
-import domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
+import (
+	domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
+	shared_dto "github.com/yaghoubi-mn/pedarkharj/internal/shared/dto"
+)
 
 type DeviceInput struct {
-	Name         string `validate:"required,name"`
-	IP           string `validate:"ipv4"`
-	RefreshToken string `validate:"jwt"`
-	UserID       uint64
+	shared_dto.DeviceInput
 }
 
 func (d *DeviceInput) CreateDevice() (device domain_device.Device) {

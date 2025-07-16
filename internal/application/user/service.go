@@ -10,13 +10,14 @@ import (
 
 	"github.com/google/uuid"
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
+	app_shared "github.com/yaghoubi-mn/pedarkharj/internal/application/shared"
 
 	// app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
 	domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
+	domain_shared "github.com/yaghoubi-mn/pedarkharj/internal/domain/shared"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 	"github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/config"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/database_errors"
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/jwt"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/s3"
@@ -26,26 +27,26 @@ import (
 )
 
 type UserAppService interface {
-	SendOTP(input SendOTPInput) datatypes.ResponseDTO
-	VerifyOTP(input VerifyOTPInput, deviceName string, deviceIP string) (mode int, responseDTO datatypes.ResponseDTO)
-	Signup(userInput SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
-	GetUserInfo(userID uint64) datatypes.ResponseDTO
-	CheckNumber(numberInput NumberInput) datatypes.ResponseDTO
-	Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO)
-	GetAccessFromRefresh(refresh string) (responseDTO datatypes.ResponseDTO)
-	ChooseUserAvatar(avatarName string, userID uint64) datatypes.ResponseDTO
-	GetAvatars() datatypes.ResponseDTO
-	ResetPassword(input RestPasswordInput) datatypes.ResponseDTO
+	SendOTP(input SendOTPInput) app_shared.ResponseDTO
+	VerifyOTP(input VerifyOTPInput, deviceName string, deviceIP string) (mode int, responseDTO app_shared.ResponseDTO)
+	Signup(userInput SignupUserInput, deviceName string, deviceIP string) (responseDTO app_shared.ResponseDTO)
+	GetUserInfo(userID uint64) app_shared.ResponseDTO
+	CheckNumber(numberInput NumberInput) app_shared.ResponseDTO
+	Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO app_shared.ResponseDTO)
+	GetAccessFromRefresh(refresh string) (responseDTO app_shared.ResponseDTO)
+	ChooseUserAvatar(avatarName string, userID uint64) app_shared.ResponseDTO
+	GetAvatars() app_shared.ResponseDTO
+	ResetPassword(input RestPasswordInput) app_shared.ResponseDTO
 }
 
 type service struct {
 	repo             domain_user.UserDomainRepository
-	cacheRepo        datatypes.CacheRepository
+	cacheRepo        domain_shared.CacheRepository
 	domainService    domain_user.UserDomainService
 	deviceAppService app_device.DeviceAppService
 }
 
-func NewUserService(repo domain_user.UserDomainRepository, cacheRepo datatypes.CacheRepository, deviceAppService app_device.DeviceAppService, domainService domain_user.UserDomainService) UserAppService {
+func NewUserService(repo domain_user.UserDomainRepository, cacheRepo domain_shared.CacheRepository, deviceAppService app_device.DeviceAppService, domainService domain_user.UserDomainService) UserAppService {
 	return &service{
 		repo:             repo,
 		cacheRepo:        cacheRepo,
@@ -55,15 +56,13 @@ func NewUserService(repo domain_user.UserDomainRepository, cacheRepo datatypes.C
 }
 
 // sent otp code to number
-func (s *service) SendOTP(input SendOTPInput) (responseDTO datatypes.ResponseDTO) {
+func (s *service) SendOTP(input SendOTPInput) (responseDTO app_shared.ResponseDTO) {
 
 	responseDTO.Data = make(map[string]any)
 
 	// isBlocked will checked in step 2
 
-	userErr := s.domainService.SendOTP(domain_user.SendOTPInput{
-		Number: input.Number,
-	})
+	userErr := s.domainService.SendOTP(domain_user.NewSendOTPInput(input.Number))
 	if userErr != nil {
 		responseDTO.UserErr = userErr
 		responseDTO.ResponseCode = rcodes.InvalidField
@@ -123,17 +122,19 @@ func (s *service) SendOTP(input SendOTPInput) (responseDTO datatypes.ResponseDTO
 }
 
 // check otp code
-func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string, deviceIP string) (int, datatypes.ResponseDTO) {
+func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string, deviceIP string) (int, app_shared.ResponseDTO) {
 
-	var responseDTO datatypes.ResponseDTO
+	var responseDTO app_shared.ResponseDTO
 	responseDTO.Data = make(map[string]any)
 
-	userErr, serverErr := s.domainService.VerifyOTP(domain_user.VerifyOTPInput{
-		Number: verifyNumberInput.Number,
-		OTP:    verifyNumberInput.OTP,
-		Token:  verifyNumberInput.Token,
-		Mode:   verifyNumberInput.Mode,
-	})
+	userErr, serverErr := s.domainService.VerifyOTP(
+		domain_user.NewVerifyOTPInput(
+			verifyNumberInput.Number,
+			verifyNumberInput.OTP,
+			verifyNumberInput.Token,
+			verifyNumberInput.Mode,
+		))
+
 	if serverErr != nil {
 		responseDTO.ServerErr = serverErr
 		return 0, responseDTO
@@ -273,17 +274,18 @@ func (s *service) VerifyOTP(verifyNumberInput VerifyOTPInput, deviceName string,
 
 }
 
-func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
+func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP string) (responseDTO app_shared.ResponseDTO) {
 
 	responseDTO.Data = make(map[string]any)
 
 	// call domain service
-	user, userErr, serverErr := s.domainService.Signup(domain_user.SignupUserInput{
-		Number:   userInput.Number,
-		Name:     userInput.Name,
-		Password: userInput.Password,
-		Token:    userInput.Token,
-	})
+	user, userErr, serverErr := s.domainService.Signup(
+		domain_user.NewSignupUserInput(
+			userInput.Number,
+			userInput.Name,
+			userInput.Password,
+			userInput.Token,
+		))
 
 	if serverErr != nil {
 		responseDTO.ServerErr = serverErr
@@ -376,12 +378,14 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 	}
 
 	// create device
-	err = s.deviceAppService.CreateOrUpdate(domain_device.DeviceInput{
-		UserID:       user.ID,
-		Name:         deviceName,
-		IP:           deviceIP,
-		RefreshToken: tokens["refresh"],
-	})
+	err = s.deviceAppService.CreateOrUpdate(
+		domain_device.NewDeviceInput(
+			deviceName,
+			deviceIP,
+			tokens["refresh"],
+			user.ID,
+		))
+
 	if err != nil {
 		responseDTO.ServerErr = err
 		return responseDTO
@@ -399,14 +403,16 @@ func (s *service) Signup(userInput SignupUserInput, deviceName string, deviceIP 
 	return responseDTO
 }
 
-func (s *service) ResetPassword(input RestPasswordInput) (responseDTO datatypes.ResponseDTO) {
+func (s *service) ResetPassword(input RestPasswordInput) (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
-	userErr, serverErr, salt, hashedPassword := s.domainService.ResetPassword(domain_user.RestPasswordInput{
-		Number:   input.Number,
-		Password: input.Password,
-		Token:    input.Token,
-	})
+	userErr, serverErr, salt, hashedPassword := s.domainService.ResetPassword(
+		domain_user.NewResetPasswordInput(
+			input.Number,
+			input.Password,
+			input.Token,
+		))
+
 	if serverErr != nil {
 		responseDTO.ServerErr = serverErr
 		return
@@ -484,7 +490,7 @@ func (s *service) ResetPassword(input RestPasswordInput) (responseDTO datatypes.
 
 }
 
-func (s *service) GetUserInfo(userID uint64) (responseDTO datatypes.ResponseDTO) {
+func (s *service) GetUserInfo(userID uint64) (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	var userOutput UserOutput
@@ -500,7 +506,7 @@ func (s *service) GetUserInfo(userID uint64) (responseDTO datatypes.ResponseDTO)
 	return responseDTO
 }
 
-func (s *service) CheckNumber(numberInput NumberInput) (responseDTO datatypes.ResponseDTO) {
+func (s *service) CheckNumber(numberInput NumberInput) (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	err := s.domainService.CheckNumber(numberInput.Number)
@@ -534,7 +540,7 @@ func (s *service) CheckNumber(numberInput NumberInput) (responseDTO datatypes.Re
 
 }
 
-func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO datatypes.ResponseDTO) {
+func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP string) (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	if err := s.domainService.CheckNumber(loginInput.Number); err != nil {
@@ -554,14 +560,16 @@ func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP s
 		return responseDTO
 	}
 
-	userErr, serverErr := s.domainService.Login(domain_user.LoginUserInput{
-		Number:        loginInput.Number,
-		InputPassword: loginInput.Password,
-		RealPassword:  user.Password,
-		Salt:          user.Salt,
-		IsBlocked:     user.IsBlocked,
-		IsRegistered:  user.IsRegistered,
-	})
+	userErr, serverErr := s.domainService.Login(
+		domain_user.NewLoginUserInput(
+			loginInput.Number,
+			loginInput.InputPassword,
+			user.Password,
+			user.Salt,
+			user.IsBlocked,
+			user.IsRegistered,
+		))
+
 	if serverErr != nil {
 		responseDTO.ServerErr = serverErr
 		return responseDTO
@@ -582,21 +590,24 @@ func (s *service) Login(loginInput LoginUserInput, deviceName string, deviceIP s
 	}
 
 	// create device
-	err = s.deviceAppService.CreateOrUpdate(domain_device.DeviceInput{
-		UserID:       user.ID,
-		Name:         deviceName,
-		IP:           deviceIP,
-		RefreshToken: tokens["refresh"],
-	})
+	err = s.deviceAppService.CreateOrUpdate(
+		domain_device.NewDeviceInput(
+			deviceName,
+			deviceIP,
+			tokens["refresh"],
+			user.ID,
+		))
+
 	if err != nil {
 		responseDTO.ServerErr = err
 		return responseDTO
 	}
+
 	responseDTO.Data = utils.ConvertMapStringStringToMapStringAny(tokens)
 	return responseDTO
 }
 
-func (s *service) GetAccessFromRefresh(refresh string) (responseDTO datatypes.ResponseDTO) {
+func (s *service) GetAccessFromRefresh(refresh string) (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	user, userErr, serverErr := s.deviceAppService.GetDeviceUserByRefreshToken(refresh)
@@ -617,7 +628,7 @@ func (s *service) GetAccessFromRefresh(refresh string) (responseDTO datatypes.Re
 
 }
 
-func (s *service) ChooseUserAvatar(avatarName string, userID uint64) (responseDTO datatypes.ResponseDTO) {
+func (s *service) ChooseUserAvatar(avatarName string, userID uint64) (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	avatars, err := s3.GetListObjects(config.AvatarPath)
@@ -657,7 +668,7 @@ func (s *service) ChooseUserAvatar(avatarName string, userID uint64) (responseDT
 	return
 }
 
-func (s *service) GetAvatars() (responseDTO datatypes.ResponseDTO) {
+func (s *service) GetAvatars() (responseDTO app_shared.ResponseDTO) {
 	responseDTO.Data = make(map[string]any)
 
 	avatars, err := s3.GetListObjects(config.AvatarPath)

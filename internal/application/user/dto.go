@@ -1,6 +1,9 @@
 package app_user
 
-import domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
+import (
+	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
+	shared_dto "github.com/yaghoubi-mn/pedarkharj/internal/shared/dto"
+)
 
 // user fields that saved in jwt token
 type JWTUser struct {
@@ -11,45 +14,70 @@ type JWTUser struct {
 }
 
 type SendOTPInput struct {
-	Number string `json:"number"`
+	shared_dto.SendOTPInput
 }
+
+// func (s SendOTPInput) GetDomainStruct() domain_user.SendOTPInput {
+// 	return domain_user.SendOTPInput{
+// 		SendOTPInput: s.SendOTPInput,
+// 	}
+// }
 
 type VerifyOTPInput struct {
-	Number string `json:"number,omitempty" validate:"required,phone_number"`
-	OTP    uint   `json:"otp,omitempty"`
-	Token  string `json:"token,omitempty" validate:"uuid"` // temporary token
-	Mode   string `json:"mode,omitempty"`                  // signup or reset password
+	shared_dto.VerifyOTPInput
 }
 
+// func (v VerifyOTPInput) GetDomainStruct() domain_user.VerifyOTPInput {
+// 	return domain_user.VerifyOTPInput{
+// 		VerifyOTPInput: v.VerifyOTPInput,
+// 	}
+// }
+
 type NumberInput struct {
-	Number string `json:"number"`
+	shared_dto.NumberInput
 }
 
 type SignupUserInput struct {
-	Number   string `json:"number" validate:"required,phone_number"` // TODO: size 13
-	Name     string `json:"name" validate:"required,name"`
-	Password string `json:"password" validate:"required"`
-	Token    string `json:"token" validate:"required,uuid"`
+	shared_dto.SignupUserInput
 }
+
+// func (s SignupUserInput) GetDomainStruct() domain_user.SignupUserInput {
+// 	return domain_user.SignupUserInput{
+// 		SignupUserInput: s.SignupUserInput,
+// 	}
+// }
 
 type LoginUserInput struct {
-	Number   string `json:"number" validator:"required,phone_number"`
-	Password string `json:"password" validator:"size:20"`
+	shared_dto.LoginUserInput
 }
 
+// func (l LoginUserInput) (storedPassword, salt string, isBlocked, isRegistered bool) domain_user.LoginUserInput {
+// 	return domain_user.LoginUserInput{
+// 		LoginUserInput: l.LoginUserInput,
+// 		RealPassword:   storedPassword,
+// 		Salt:           salt,
+// 		IsBlocked:      isBlocked,
+// 		IsRegistered:   isRegistered,
+// 	}
+// }
+
 type RefreshInput struct {
-	Refresh string `json:"refresh"`
+	shared_dto.RefreshInput
 }
 
 type AvatarChooseInput struct {
-	Avatar string `json:"avatar"`
+	shared_dto.AvatarChooseInput
 }
 
 type RestPasswordInput struct {
-	Number   string `json:"number"`
-	Password string `json:"password"`
-	Token    string `json:"token"`
+	shared_dto.RestPasswordInput
 }
+
+// func (r RestPasswordInput) GetDomainStruct() domain_user.RestPasswordInput {
+// 	return domain_user.RestPasswordInput{
+// 		RestPasswordInput: r.RestPasswordInput,
+// 	}
+// }
 
 type UserOutput struct {
 	Name   string `json:"name"`

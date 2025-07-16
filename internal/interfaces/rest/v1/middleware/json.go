@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/interfaces_rest_v1_shared"
+	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/shared"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/rcodes"
 )
 
