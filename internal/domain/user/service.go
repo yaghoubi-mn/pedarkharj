@@ -51,7 +51,7 @@ func (s *service) VerifyOTP(input VerifyOTPInput) (error, error) {
 		return service_errors.ErrInvalidCode, nil
 	}
 
-	if err := s.validator.ValidateField(input.Token, "uuid,allowempty"); err != nil {
+	if err := s.validator.ValidateField(input.Token, "uuid"); err != nil {
 		return service_errors.ErrInvalidToken, nil
 	}
 

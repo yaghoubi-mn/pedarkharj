@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
+	shared_dto "github.com/yaghoubi-mn/pedarkharj/internal/shared/dto"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/service_errors"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/utils"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
@@ -88,7 +89,9 @@ func TestSendOTP(t *testing.T) {
 
 	for _, tt := range tests {
 		userErr := userService.SendOTP(domain_user.SendOTPInput{
-			Number: tt.Number,
+			SendOTPInput: shared_dto.SendOTPInput{
+				PhoneNumber: tt.Number,
+			},
 		})
 
 		assert.Equal(t, tt.WantErr, userErr, tt)
@@ -158,10 +161,12 @@ func TestVerifyOTP(t *testing.T) {
 
 	for _, tt := range tests {
 		userErr, serverErr := userService.VerifyOTP(domain_user.VerifyOTPInput{
-			Number: tt.number,
-			OTP:    tt.code,
-			Token:  tt.token,
-			Mode:   tt.mode,
+			VerifyOTPInput: shared_dto.VerifyOTPInput{
+				PhoneNumber: tt.number,
+				OTP:         tt.code,
+				Token:       tt.token,
+				Mode:        tt.mode,
+			},
 		})
 		assert.NoError(t, serverErr, tt)
 
@@ -253,10 +258,12 @@ func TestSignup(t *testing.T) {
 	for _, tt := range tests {
 
 		user, userErr, serverErr := userService.Signup(domain_user.SignupUserInput{
-			Number:   tt.user.Number,
-			Name:     tt.user.Name,
-			Password: tt.user.Password,
-			Token:    tt.token,
+			SignupUserInput: shared_dto.SignupUserInput{
+				PhoneNumber: tt.user.Number,
+				Name:        tt.user.Name,
+				Password:    tt.user.Password,
+				Token:       tt.token,
+			},
 		})
 		assert.NoError(t, serverErr, tt)
 
@@ -334,10 +341,12 @@ func TestResetPassword(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		userErr, serverErr, salt, outPassword := userService.ResetPassword(domain_user.RestPasswordInput{
-			Number:   tt.Number,
-			Password: tt.Password,
-			Token:    tt.Token,
+		userErr, serverErr, salt, outPassword := userService.ResetPassword(domain_user.ResetPasswordInput{
+			ResetPasswordInput: shared_dto.ResetPasswordInput{
+				PhoneNumber: tt.Number,
+				Password:    tt.Password,
+				Token:       tt.Token,
+			},
 		})
 
 		assert.NoError(t, serverErr, tt)
@@ -558,8 +567,10 @@ func TestLogin(t *testing.T) {
 	for _, tt := range tests {
 
 		userErr, serverErr := userService.Login(domain_user.LoginUserInput{
-			Number:         tt.Number,
-			InputPassword:  tt.Password,
+			LoginUserInput: shared_dto.LoginUserInput{
+				PhoneNumber:   tt.Number,
+				InputPassword: tt.Password,
+			},
 			StoredPassword: tt.HashedPassword,
 			Salt:           salt,
 			IsRegistered:   tt.IsRegistered,

@@ -1,16 +1,20 @@
 package config
 
-import "time"
+import (
+	"log/slog"
+	"os"
+	"time"
+)
 
 const (
-	// debug mode
-	Debug = true
 
 	// s3
 	AvatarPath = "avatars/"
 )
 
 var (
+	Debug = true
+
 	// bcrypt cost
 	BcryptCost = 16
 
@@ -23,6 +27,11 @@ var (
 )
 
 func init() {
+	if os.Getenv("DEBUG") == "false" {
+		Debug = false
+		slog.Info("---Debug mode is off---")
+	}
+
 	if Debug {
 		BcryptCost = 1
 		JWTAccessExpire = 24 * time.Hour

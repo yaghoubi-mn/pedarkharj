@@ -8,11 +8,11 @@ import (
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
 	domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
+	domain_shared "github.com/yaghoubi-mn/pedarkharj/internal/domain/shared"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 	repository "github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/repository/gorm"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/cache"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/database"
-	"github.com/yaghoubi-mn/pedarkharj/pkg/datatypes"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/s3"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/validator"
 	"gorm.io/gorm"
@@ -56,7 +56,7 @@ func init() {
 
 }
 
-func GetCacheRepository() datatypes.CacheRepository {
+func GetCacheRepository() domain_shared.CacheRepository {
 	return cache.New(db)
 }
 

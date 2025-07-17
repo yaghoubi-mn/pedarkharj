@@ -12,4 +12,5 @@ var (
 	ErrAvatarNotFound                           = errors.New("avatar: avatar not found")
 	ErrWrongOTP                                 = errors.New("otp: wrong otp")
 	ErrWrongToken                               = errors.New("token: wrong token")
+	ErrRefreshTokenExpired                      = errors.New("refresh: refresh token expired")
 )
