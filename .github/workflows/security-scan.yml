@@ -1,0 +1,212 @@
+name: Go Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  # schedule:
+    # Run security scan daily at 2 AM UTC
+    # - cron: '0 2 * * *'
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    # Gosec - Go security checker
+    - name: Run Gosec Security Scanner
+      uses: securecodewarrior/github-action-gosec@master
+      with:
+        args: '-fmt sarif -out gosec-results.sarif ./...'
+      continue-on-error: true
+
+    - name: Upload Gosec results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: gosec-results.sarif
+
+    # govulncheck - Go vulnerability checker
+    - name: Install govulncheck
+      run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+    - name: Run govulncheck
+      run: govulncheck ./...
+
+    # nancy - Check for vulnerabilities in Go dependencies
+    - name: Write go list
+      run: go list -json -m all > go.list
+
+    - name: Run Nancy vulnerability check
+      use: sonatype-nexus-community/nancy-github-action@main 
+
+    # staticcheck - Go static analysis
+    - name: Install staticcheck
+      run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+    - name: Run staticcheck
+      run: staticcheck ./...
+
+    # go-critic - Go linter focusing on security
+    - name: Install go-critic
+      run: go install github.com/go-critic/go-critic/cmd/gocritic@latest
+
+    - name: Run go-critic
+      run: gocritic check -enableAll ./...
+      continue-on-error: true
+
+    # ineffassign - Detect ineffectual assignments
+    - name: Install ineffassign
+      run: go install github.com/gordonklaus/ineffassign@latest
+
+    - name: Run ineffassign
+      run: ineffassign ./...
+
+    # misspell - Check for commonly misspelled words
+    - name: Install misspell
+      run: go install github.com/client9/misspell/cmd/misspell@latest
+
+    - name: Run misspell
+      run: misspell -error .
+
+    # golangci-lint - Meta-linter with security rules
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: latest
+        args: --timeout=10m --enable=gosec,gocritic,ineffassign,misspell,unparam,unconvert,goconst,gocyclo,goimports,revive
+
+    # Semgrep - Static analysis for security
+    - name: Run Semgrep
+      uses: returntocorp/semgrep-action@v1
+      with:
+        config: >-
+          p/security-audit
+          p/golang
+          p/owasp-top-ten
+          p/cwe-top-25
+      continue-on-error: true
+      env:
+        SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+    # Check for hardcoded secrets
+    - name: Run TruffleHog OSS
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+
+    # License compliance check
+    - name: Install go-licenses
+      run: go install github.com/google/go-licenses@latest
+
+    - name: Check licenses
+      run: go-licenses check ./...
+      continue-on-error: true
+
+    # Test with race detector
+    - name: Run tests with race detector
+      run: go test -race -coverprofile=coverage.out ./...
+
+    # Check for potential integer overflows
+    - name: Install go-safer
+      run: go install github.com/jlauinger/go-safer@latest
+
+    - name: Run go-safer
+      run: go-safer ./...
+      continue-on-error: true
+
+    # Upload coverage to security dashboard
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.out
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    # Generate security report
+    - name: Generate Security Report
+      run: |
+        echo "# Security Scan Report" > security-report.md
+        echo "Generated on: $(date)" >> security-report.md
+        echo "" >> security-report.md
+        echo "## Tools Used:" >> security-report.md
+        echo "- Gosec: Go security checker" >> security-report.md
+        echo "- govulncheck: Go vulnerability database checker" >> security-report.md
+        echo "- Nancy: OSS Index vulnerability checker" >> security-report.md
+        echo "- staticcheck: Static analysis" >> security-report.md
+        echo "- go-critic: Advanced Go linter" >> security-report.md
+        echo "- golangci-lint: Meta-linter with security rules" >> security-report.md
+        echo "- Semgrep: Static analysis for security patterns" >> security-report.md
+        echo "- TruffleHog: Secret detection" >> security-report.md
+        echo "- Race detector: Concurrency issues" >> security-report.md
+        echo "- go-safer: Integer overflow detection" >> security-report.md
+        echo "" >> security-report.md
+        echo "## Status: $(if [ ${{ job.status }} = 'success' ]; then echo 'PASSED'; else echo 'FAILED'; fi)" >> security-report.md
+
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-report
+        path: security-report.md
+
+    # Fail the job if critical security issues found
+    - name: Check for critical security issues
+      run: |
+        if [ -f gosec-results.sarif ]; then
+          # Check if there are any HIGH or CRITICAL severity issues
+          if grep -q '"level": "error"' gosec-results.sarif; then
+            echo "Critical security issues found!"
+            exit 1
+          fi
+        fi
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Dependency Review
+      uses: actions/dependency-review-action@v3
+      with:
+        config-file: '.github/dependency-review-config.yml'
+        fail-on-severity: 'moderate'
