@@ -5,15 +5,17 @@ import (
 	"net/http"
 
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
+	app_expense "github.com/yaghoubi-mn/pedarkharj/internal/application/expense"
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
 	device_handler "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/device"
+	expense_handler "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/expense"
 	"github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/middleware"
 	user_handler "github.com/yaghoubi-mn/pedarkharj/internal/interfaces/rest/v1/user"
 )
 
 var URLs []string
 
-func NewRouter(userAppService app_user.UserAppService, deviceAppService app_device.DeviceAppService) *http.ServeMux {
+func NewRouter(userAppService app_user.UserAppService, deviceAppService app_device.DeviceAppService, expenseAppService app_expense.ExpenseAppService) *http.ServeMux {
 	mux := http.NewServeMux()
 	// authMux := http.NewServeMux()
 
@@ -26,6 +28,7 @@ func NewRouter(userAppService app_user.UserAppService, deviceAppService app_devi
 	// handlers
 	userHandler := user_handler.NewHandler(userAppService, jsonResponse)
 	deviceHandler := device_handler.NewHandler(deviceAppService, jsonResponse)
+	expenseHandler := expense_handler.NewHandler(expenseAppService, jsonResponse)
 
 	// handle 404
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +59,9 @@ func NewRouter(userAppService app_user.UserAppService, deviceAppService app_devi
 	// device routes
 	registerRoute(mux, "POST", "/devices/logout", authMiddleware.EnsureAuthentication(http.HandlerFunc((deviceHandler.Logout))))
 	registerRoute(mux, "POST", "/devices/logout-all", authMiddleware.EnsureAuthentication(http.HandlerFunc(deviceHandler.LogoutAllUserDevices)))
+
+	// expense routes
+	registerRoute(mux, "POST", "/expenses", authMiddleware.EnsureAuthentication(http.HandlerFunc(expenseHandler.Create)))
 
 	// connect muxes
 	// mux.Handle("/", authMiddleware.EnsureAuthentication(authMux))

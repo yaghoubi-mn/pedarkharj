@@ -32,7 +32,7 @@ type RefreshInput struct {
 }
 
 type AvatarChooseInput struct {
-	Avatar string `json:"avatar" validate:"requied,url"`
+	Avatar string `json:"avatar" validate:"requied,username"`
 }
 
 type ResetPasswordInput struct {

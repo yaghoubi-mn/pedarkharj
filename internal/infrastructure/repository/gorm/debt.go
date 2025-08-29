@@ -14,9 +14,17 @@ func NewGormDebtRepository(db *gorm.DB) domain_debt.DebtDomainRepository {
 	return &GormDebtRepository{DB: db}
 }
 
-func (repo *GormDebtRepository) GetByID(id uint64) (domain_debt.Debt, error) {
+func (repo *GormDebtRepository) CreateMultipleWithTransaction(debts []domain_debt.Debt) error {
+	return repo.DB.Transaction(func(tx *gorm.DB) error {
+
+		err := tx.Create(&debts).Error
+		return err
+	})
+}
+
+func (repo *GormDebtRepository) GetByID(id, userID uint64) (domain_debt.Debt, error) {
 	var user domain_debt.Debt
-	if err := repo.DB.Where(domain_debt.Debt{ID: id}).First(&user).Error; err != nil {
+	if err := repo.DB.Model(domain_debt.Debt{}).Where("id = ? AND (debtor_id = ? OR creditor_id = ?)", id, userID, userID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return user, database_errors.ErrRecordNotFound
 		}

@@ -8,9 +8,13 @@ import (
 	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	_ "github.com/yaghoubi-mn/pedarkharj/docs"
+	app_debt "github.com/yaghoubi-mn/pedarkharj/internal/application/debt"
 	app_device "github.com/yaghoubi-mn/pedarkharj/internal/application/device"
+	app_expense "github.com/yaghoubi-mn/pedarkharj/internal/application/expense"
 	app_user "github.com/yaghoubi-mn/pedarkharj/internal/application/user"
+	domain_debt "github.com/yaghoubi-mn/pedarkharj/internal/domain/debt"
 	domain_device "github.com/yaghoubi-mn/pedarkharj/internal/domain/device"
+	domain_expense "github.com/yaghoubi-mn/pedarkharj/internal/domain/expense"
 	domain_shared "github.com/yaghoubi-mn/pedarkharj/internal/domain/shared"
 	domain_user "github.com/yaghoubi-mn/pedarkharj/internal/domain/user"
 	_ "github.com/yaghoubi-mn/pedarkharj/internal/infrastructure/config"
@@ -64,6 +68,8 @@ func main() {
 			db,
 			domain_user.User{},
 			domain_device.Device{},
+			domain_expense.Expense{},
+			domain_debt.Debt{},
 		)
 
 		if err != nil {
@@ -102,20 +108,26 @@ func main() {
 
 func setupRouter(db *gorm.DB, validatorIns domain_shared.Validator, cacheRepo domain_shared.CacheRepository) *http.ServeMux {
 
-	// setup domain
+	// setup domain service
 	userDomainService := domain_user.NewUserService(validatorIns)
 	deviceDomainService := domain_device.NewDeviceService(validatorIns)
+	expenseDomainService := domain_expense.NewExpenseService(validatorIns)
+	debtDomainService := domain_debt.NewDebtDomainService(validatorIns)
 
 	// setup repository
 	userRepo := gorm_repository.NewGormUserRepository(db)
 	deviceRepo := gorm_repository.NewGormDeviceRepository(db)
+	expenseRepo := gorm_repository.NewGormExpenseRepository(db)
+	debtRepo := gorm_repository.NewGormDebtRepository(db)
 
-	// setup application
+	// setup application service
 	deviceAppService := app_device.NewDeviceAppService(deviceRepo, deviceDomainService)
 	userAppService := app_user.NewUserService(userRepo, cacheRepo, deviceAppService, userDomainService)
+	debtAppService := app_debt.NewDebtAppService(debtRepo, debtDomainService)
+	expenseAppService := app_expense.NewExpenseAppService(expenseRepo, expenseDomainService, debtAppService)
 
 	// setup router
-	muxV1 := interfaces_rest_v1.NewRouter(userAppService, deviceAppService)
+	muxV1 := interfaces_rest_v1.NewRouter(userAppService, deviceAppService, expenseAppService)
 
 	return muxV1
 }

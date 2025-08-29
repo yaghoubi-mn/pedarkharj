@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 	"errors"
-	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -43,8 +43,13 @@ func (a *authMiddleware) EnsureAuthentication(next http.Handler) http.Handler {
 		var err error
 		user.ID, user.Name, user.PhoneNumber, user.IsRegistered, err = jwt.GetUserFromAccess(access)
 		if err != nil {
-			fmt.Println("JWT ERROR:", err)
+			slog.Info("JWT ERROR", "error", err)
 			a.response.ErrorResponse(w, 401, rcodes.InvalidToken, nil, errors.New("authorization: invalid token"))
+			return
+		}
+
+		if user.ID == 0 {
+			a.response.ServerErrorResponse(w, errors.New("userID is 0 in JWT"))
 			return
 		}
 

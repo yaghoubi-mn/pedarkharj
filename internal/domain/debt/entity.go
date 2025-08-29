@@ -17,7 +17,6 @@ type Debt struct {
 	Debtor     domain_user.User
 
 	Amount uint64 `gorm:"not null"`
-	Type   string `gorm:"not null"` // group, contact (pay all a contact debts), single (a debt or credit to another person)
 
 	IsCreditorAccepted           bool
 	IsDebtorAccepted             bool

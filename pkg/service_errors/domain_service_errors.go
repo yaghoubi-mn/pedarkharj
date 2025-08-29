@@ -4,6 +4,11 @@ import "errors"
 
 var (
 	// global
+	ErrPermissionDenied   = errors.New("permission denied")
+	ErrInvalidDescription = errors.New("description: invalid description")
+	ErrInvalidPage        = errors.New("page: invalid page")
+	ErrInvalidLimit       = errors.New("limit: invalid limit")
+	ErrInvalidID          = errors.New("id: invalid id")
 
 	// user
 	ErrInternalServerError = errors.New("internal server error")
@@ -23,6 +28,13 @@ var (
 	// device
 	ErrInvalidIP           = errors.New("lastIP: invalid last ip")
 	ErrInvalidRefreshToken = errors.New("refresh: invalid refresh token")
-	ErrInvalidUserID       = errors.New("userID: invalid userID")
 	ErrInvalidUserAgent    = errors.New("useragent: invalid user agent")
+
+	// expense
+	ErrInvalidCredit                     = errors.New("credit: invalid credit")
+	ErrDebtIsNotPaid                     = errors.New("debt is not paid yet")
+	ErrEmptyCreditors                    = errors.New("creditors: creditors cannot be empty")
+	ErrCommonCreditorAndDebtor           = errors.New("debtors: list of creditors and debtors cannot overlap")
+	ErrLowCredit                         = errors.New("creditors: credit is too low")
+	ErrCreatorNustBeInCreditorsOrDebtors = errors.New("creator must be in creditors or debtors")
 )

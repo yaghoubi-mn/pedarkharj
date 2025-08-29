@@ -3,7 +3,7 @@ package domain_device
 import (
 	"time"
 
-	"github.com/yaghoubi-mn/pedarkharj/internal/domain/shared"
+	domain_shared "github.com/yaghoubi-mn/pedarkharj/internal/domain/shared"
 	"github.com/yaghoubi-mn/pedarkharj/pkg/service_errors"
 )
 
@@ -38,7 +38,7 @@ func (s *service) Create(device *Device) error {
 	}
 
 	if device.UserID == 0 {
-		return service_errors.ErrInvalidUserID
+		return service_errors.ErrInvalidID
 	}
 
 	device.LastLogin = time.Now()
@@ -78,7 +78,7 @@ func (s *service) Logout(userID uint64, deviceName string) error {
 	}
 
 	if userID == 0 {
-		return service_errors.ErrInvalidUserID
+		return service_errors.ErrInvalidID
 	}
 
 	return nil
@@ -87,7 +87,7 @@ func (s *service) Logout(userID uint64, deviceName string) error {
 func (s *service) LogoutAllUserDevices(userID uint64) error {
 
 	if userID == 0 {
-		return service_errors.ErrInvalidUserID
+		return service_errors.ErrInvalidID
 	}
 
 	return nil

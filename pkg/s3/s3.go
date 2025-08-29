@@ -37,7 +37,7 @@ func Init() {
 	if accessKey == "" || secretKey == "" || bucketName == "" || apiUrlValue == "" || accessUrl == "" || accessUrlProtocol == "" {
 		printIfEmpty := func(name, value string) {
 			if value == "" {
-				slog.Error("cannot get env variable for s3", "error", name+" is empty")
+				slog.Warn("cannot get env variable for s3", "error", name+" is empty")
 			}
 		}
 

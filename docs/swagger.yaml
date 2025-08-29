@@ -72,6 +72,60 @@ paths:
       summary: Logout all user devices
       tags:
       - devices
+  /expenses:
+    post:
+      consumes:
+      - application/json
+      description: create new expense.
+      parameters:
+      - description: expense name
+        in: body
+        name: name
+        required: true
+        schema:
+          type: string
+      - description: expense description
+        in: body
+        name: description
+        required: true
+        schema:
+          type: string
+      - description: 'creditors key value list: phone number is key and credit amount
+          is value'
+        in: body
+        name: creditors
+        required: true
+        schema:
+          additionalProperties:
+            type: integer
+          type: object
+      - description: list of debtors phone number
+        example: '"["+989123456786", "+989123456787"]"'
+        in: body
+        name: debtors
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Ok
+        "400":
+          description: 'BadRequest:<br>code=invalid_field: a field is invalid'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      tags:
+      - expenses
   /users/avatar:
     get:
       consumes:

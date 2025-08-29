@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	INVALID_NAME_CHARS      = []string{"*", "/", "!", "@", "#", "$%", "^", "&", "*", "(", ")", "_", "+", "-", "=", "{", "}", "[", "]", ";", ":", "'", "\\", "?", "\"", ".", ">", "<", "|", "union"}
-	INVALID_USERAGENT_CHARS = []string{"\\", "union", "<", "'"}
+	INVALID_NAME_CHARS        = []string{"*", "/", "!", "@", "#", "$%", "^", "&", "*", "(", ")", "_", "+", "-", "=", "{", "}", "[", "]", ";", ":", "'", "\\", "?", "\"", ".", ">", "<", "|", "union"}
+	INVALID_DESCRIPTION_CHARS = []string{"<", ">", "'"}
+	INVALID_USERAGENT_CHARS   = []string{"\\", "union", "<", "'"}
 )
 
 type validate struct {
@@ -30,12 +31,30 @@ func NewValidator() *validate {
 				return false
 			}
 		}
-		fmt.Println("name", fl.Field().String(), "is valid")
 		return true
-
+	})
+	vald.RegisterValidation("description", func(fl validator_lib.FieldLevel) bool {
+		for _, char := range INVALID_DESCRIPTION_CHARS {
+			if strings.Contains(fmt.Sprintf("%v", fl.Field()), char) {
+				return false
+			}
+		}
+		return true
 	})
 	vald.RegisterValidation("phone_number", func(fl validator_lib.FieldLevel) bool {
 		ok, err := regexp.Match("\\+?9\\d{9}$", []byte(fl.Field().String()))
+		if err != nil {
+			slog.Error("error in number regex", "err", err)
+		}
+
+		if len(fl.Field().String()) != 13 {
+			return false
+		}
+
+		return ok
+	})
+	vald.RegisterValidation("username", func(fl validator_lib.FieldLevel) bool {
+		ok, err := regexp.Match("^([A-Za-z]|\\.){1,200}$", []byte(fl.Field().String()))
 		if err != nil {
 			slog.Error("error in number regex", "err", err)
 		}
